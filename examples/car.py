@@ -21,6 +21,8 @@
 from .framework import (Framework, Keys, main)
 from .bridge import create_bridge
 from math import sqrt
+import numpy as np
+from random import random
 
 from Box2D import (b2CircleShape, b2EdgeShape, b2FixtureDef, b2PolygonShape,
                    b2_pi)
@@ -87,24 +89,58 @@ def create_car(world, offset, wheel_radius, wheel_separation, density=1.0,
     return chassis, wheels, springs
 
 
-class Car (Framework):
-    name = "Car"
-    description = "Keys: left = a, brake = s, right = d, hz down = q, hz up = e"
-    hz = 4
-    zeta = 0.7
-    speed = 50
-    bridgePlanks = 20
-
+class WheelRepresentation:
     def __init__(self):
-        super(Car, self).__init__()
+        random()
+    
+    def __init__(self, wheelVer, axleAngl, wheelRad):
+        self.wheelVertex = wheelVer
+        self.axleAngle = axleAngl
+        self.wheelRadius = wheelRad
+    
+    def get_chromosome(self):
+        return np.array([self.wheelVertex, self.axleAngle, self.wheelRadius])
+    
+    def random(self):
+        self.wheelVertex = random()
+        self.axleAngle = random()
+        self.wheelRadius = random()
 
-        # The ground -- create some terrain
-        ground = self.world.CreateStaticBody(
+class CarRepresentation:
+    def __init__(self, dampingRatio, body_dirs, body_mag, wheels):
+        self.dampingRatio = dampingRatio
+        self.body_directions = body_dirs
+        self.body_magnitudes = body_mag
+        self.wheels = wheels
+        
+    def put_to_world(self, world):
+        asdasd
+        
+    def get_chromosome(self):
+        return np.hstack([self.dampingRatio, self.body_direction, self.body_magnitudes] \
+            + [wheel.get_chromosome() for wheel in wheels])
+    
+    def make_mutation(self, params):
+        asdasdasd
+        
+    def random():
+        self.dampingRatio = random()
+        self.body_directions = np.rand(8)
+        self.body_magnitudes = np.rand(8)
+        self.wheels = []
+        for i in range(2): # hardcoded number of wheels
+            self.wheels += WheelRepresentation()
+
+class Track:
+    def __init__(self, length):
+        self.sticks = np.random.rand(length)
+    def put_to_world(self, world):
+        ground = world.CreateStaticBody(
             shapes=b2EdgeShape(vertices=[(-20, 0), (20, 0)])
         )
 
         x, y1, dx = 20, 0, 5
-        vertices = [0.25, 1, 4, 0, 0, -1, -2, -2, -1.25, 0]
+        vertices = self.sticks
         for y2 in vertices * 2:  # iterate through vertices twice
             ground.CreateEdgeFixture(
                 vertices=[(x, y1), (x + dx, y2)],
@@ -126,7 +162,26 @@ class Car (Framework):
                 friction=0.6,
             )
 
+
+class Playground (Framework):
+    name = "Car"
+    description = "Keys: left = a, brake = s, right = d, hz down = q, hz up = e"
+    hz = 4
+    zeta = 0.7
+    speed = 50
+    bridgePlanks = 20
+
+    def __init__(self):
+        super(Playground, self).__init__()
+        
+        track = Track(20)
+        
+        track.put_to_world(self.world)
+
+        # The ground -- create some terrain
+
         # Teeter
+        """
         body = self.world.CreateDynamicBody(
             position=(140, 0.90),
             fixtures=b2FixtureDef(
@@ -143,7 +198,6 @@ class Car (Framework):
             upperAngle=8.0 * b2_pi / 180.0,
             enableLimit=True,
         )
-
         # Bridge
         create_bridge(self.world, ground, (2.0, 0.25),
                       (161.0, -0.125), self.bridgePlanks)
@@ -157,7 +211,7 @@ class Car (Framework):
                     density=0.5,
                 )
             )
-
+        """
         car, wheels, springs = create_car(self.world, offset=(
             0.0, 1.0), wheel_radius=0.4, wheel_separation=2.0, scale=(1, 1))
         self.car = car
@@ -181,10 +235,10 @@ class Car (Framework):
                 spring.springFrequencyHz = self.hz
 
     def Step(self, settings):
-        super(Car, self).Step(settings)
+        super(Playground, self).Step(settings)
         self.viewCenter = (self.car.position.x, 20)
         self.Print("frequency = %g hz, damping ratio = %g" %
                    (self.hz, self.zeta))
 
 if __name__ == "__main__":
-    main(Car)
+    main(Playground)
