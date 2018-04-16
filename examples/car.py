@@ -51,13 +51,26 @@ def create_car(world, offset, wheel_radius, wheel_separation, density=1.0,
     radius_scale = sqrt(scale_x ** 2 + scale_y ** 2)
     wheel_radius *= radius_scale
 
-    chassis = world.CreateDynamicBody(
-        position=(x_offset, y_offset),
-        fixtures=b2FixtureDef(
-            shape=b2PolygonShape(vertices=chassis_vertices),
-            density=density,
-        )
-    )
+    body = world.CreateDynamicBody(position=(x_offset, y_offset))
+
+    for i in range(len(chassis_vertices)):
+        vs = [(0.,0.), chassis_vertices[i], chassis_vertices[(i + 1) % len(chassis_vertices)]]
+        body.CreatePolygonFixture(shape=b2PolygonShape(vertices=vs),
+                density=density)
+    # chassis = world.CreateDynamicBody(
+    #     position=(x_offset, y_offset),
+    #     fixtures=b2FixtureDef(
+    #
+    #     )
+    # )
+    # chassis = world.CreateDynamicBody(
+    #     position=(x_offset, y_offset),
+    #     fixtures=b2FixtureDef(
+    #         shape=b2PolygonShape(vertices=chassis_vertices[3:6]),
+    #
+    #         density=density,
+    #     )
+    # )
 
     wheels, springs = [], []
     wheel_xs = [-wheel_separation * scale_x /
@@ -70,9 +83,9 @@ def create_car(world, offset, wheel_radius, wheel_separation, density=1.0,
                 density=density,
             )
         )
-
+        print ("POZYCJA: ", wheel.position)
         spring = world.CreateWheelJoint(
-            bodyA=chassis,
+            bodyA=body,
             bodyB=wheel,
             anchor=wheel.position,
             axis=wheel_axis,
@@ -86,7 +99,7 @@ def create_car(world, offset, wheel_radius, wheel_separation, density=1.0,
         wheels.append(wheel)
         springs.append(spring)
 
-    return chassis, wheels, springs
+    return body, wheels, springs
 
 
 class WheelRepresentation:
@@ -99,37 +112,100 @@ class WheelRepresentation:
         self.wheelRadius = wheelRad
     
     def get_chromosome(self):
-        return np.array([self.wheelVertex, self.axleAngle, self.wheelRadius])
+        return np.array([self.wheelVertex[0], self.wheelVertex[1], self.axleAngle, self.wheelRadius])
+
+    def put_chromosome(self, chromosome):
+        assert(chromosome.shape == (3,))
+
+        self.wheelVertex = chromosome[0]
+        self.axleAngle = chromosome[1]
+        self.wheelRadius = chromosome[2]
     
     def random(self):
-        self.wheelVertex = random()
-        self.axleAngle = random()
-        self.wheelRadius = random()
+        self.wheelVertex = np.random.rand()
+        self.axleAngle = np.random.rand()
+        self.wheelRadius = np.random.rand()
+
 
 class CarRepresentation:
-    def __init__(self, dampingRatio, body_dirs, body_mag, wheels):
-        self.dampingRatio = dampingRatio
-        self.body_directions = body_dirs
-        self.body_magnitudes = body_mag
-        self.wheels = wheels
-        
-    def put_to_world(self, world):
-        asdasd
-        
+    def __init__(self, damping_ratio, body_vectors, wheels):
+        # body_vectors N x 2
+        self.chromosome = \
+            np.hstack([damping_ratio, body_vectors.reshape(-1), np.hstack([wheel.get_chromosome() for wheel in wheels])])
+
+        self.body_vec_num = body_vectors.shape[0]
+        self.wheel_num = len(wheels)
+
+        print (self.chromosome)
+
+    def put_to_world(self, world, offset, scale, hz, zeta, density, max_torque):
+        x_offset, y_offset = offset
+        scale_x, scale_y = scale
+
+        main_body = world.CreateDynamicBody(position=(x_offset, y_offset))
+
+        for i in range(self.body_vec_num):
+            triangle = [(0., 0.),
+                (scale_x * self.chromosome[2 * i + 1], scale_y * self.chromosome[2 * i + 2]),
+                (scale_x * self.chromosome[(2 * ((i + 1) % self.body_vec_num)) + 1],
+                 scale_y * self.chromosome[(2 * (((i + 1) % self.body_vec_num))) + 2])]
+            main_body.CreatePolygonFixture(shape=b2PolygonShape(vertices=triangle),
+                density=density)
+
+        radius_scale = sqrt(scale_x ** 2 + scale_y ** 2)
+
+        wheels, springs = [], []
+
+        it_offset = 2 * self.body_vec_num + 1
+        enableMotor = [False] * self.wheel_num
+        enableMotor[0] = True
+
+        for i in range(self.wheel_num):
+            vertex_x = self.chromosome[4 * i + it_offset]
+            vertex_y = self.chromosome[4 * i + it_offset + 1]
+            axle_angle = self.chromosome[4 * i + it_offset + 2]
+            radius = radius_scale * self.chromosome[4 * i + it_offset + 3]
+            print (vertex_x, vertex_y, axle_angle, radius)
+
+            wheel = world.CreateDynamicBody(
+                position=(x_offset + vertex_x * scale_x, y_offset + vertex_y * scale_y),
+                fixtures=b2FixtureDef(
+                    shape=b2CircleShape(radius=radius),
+                    density=density,
+                )
+            )
+
+            spring = world.CreateWheelJoint(
+                bodyA=main_body,
+                bodyB=wheel,
+                anchor=wheel.position,
+                axis=(0., 1.),
+                motorSpeed=0.0,
+                maxMotorTorque=max_torque,
+                enableMotor=enableMotor[i],
+                frequencyHz=hz,
+                dampingRatio=zeta
+            )
+
+            wheels.append(wheel)
+            springs.append(spring)
+
+        return main_body, wheels, springs
+
     def get_chromosome(self):
-        return np.hstack([self.dampingRatio, self.body_direction, self.body_magnitudes] \
-            + [wheel.get_chromosome() for wheel in wheels])
-    
-    def make_mutation(self, params):
-        asdasdasd
+        return self.chromosome
         
-    def random():
-        self.dampingRatio = random()
-        self.body_directions = np.rand(8)
-        self.body_magnitudes = np.rand(8)
-        self.wheels = []
+    def random(self):
+        dampingRatio = random()
+        body_directions = np.rand(8)
+        body_magnitudes = np.rand(8)
+        wheels = []
         for i in range(2): # hardcoded number of wheels
-            self.wheels += WheelRepresentation()
+            wheels += WheelRepresentation()
+
+        self.chromosome = \
+            np.hstack([dampingRatio, body_directions, body_magnitudes] \
+            + [wheel.get_chromosome() for wheel in wheels])
 
 class Track:
     def __init__(self, length):
@@ -212,8 +288,15 @@ class Playground (Framework):
                 )
             )
         """
-        car, wheels, springs = create_car(self.world, offset=(
-            0.0, 1.0), wheel_radius=0.4, wheel_separation=2.0, scale=(1, 1))
+        c = CarRepresentation(1., np.array([
+            (-1.5, -0.5),
+            (1.5, -0.5),
+            (1.5, 0.0),
+            (0.0, 0.9),
+            (-1.15, 0.9),
+            (-1.5, 0.2),]),
+        [WheelRepresentation([-1., -1], 0., 0.4), WheelRepresentation([1, -1], 0., 0.4)])
+        car, wheels, springs = c.put_to_world(self.world, (0.0, 10.), (1, 1), 4., 0.7, 1., 40.)
         self.car = car
         self.wheels = wheels
         self.springs = springs
