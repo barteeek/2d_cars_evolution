@@ -136,8 +136,6 @@ class CarRepresentation:
         self.body_vec_num = body_vectors.shape[0]
         self.wheel_num = len(wheels)
 
-        print (self.chromosome)
-
     def put_to_world(self, world, offset, scale, hz, zeta, density, max_torque):
         x_offset, y_offset = offset
         scale_x, scale_y = scale
@@ -165,7 +163,6 @@ class CarRepresentation:
             vertex_y = self.chromosome[4 * i + it_offset + 1]
             axle_angle = self.chromosome[4 * i + it_offset + 2]
             radius = radius_scale * self.chromosome[4 * i + it_offset + 3]
-            print (vertex_x, vertex_y, axle_angle, radius)
 
             wheel = world.CreateDynamicBody(
                 position=(x_offset + vertex_x * scale_x, y_offset + vertex_y * scale_y),
@@ -207,7 +204,8 @@ class CarRepresentation:
             np.hstack([dampingRatio, body_directions, body_magnitudes] \
             + [wheel.get_chromosome() for wheel in wheels])
 
-class Track:
+
+class Terrain:
     def __init__(self, length):
         self.sticks = np.random.rand(length)
     def put_to_world(self, world):
@@ -226,19 +224,6 @@ class Track:
             y1 = y2
             x += dx
 
-        x_offsets = [0, 80, 40, 20, 40]
-        x_lengths = [40, 40, 10, 40, 0]
-        y2s = [0, 0, 5, 0, 20]
-
-        for x_offset, x_length, y2 in zip(x_offsets, x_lengths, y2s):
-            x += x_offset
-            ground.CreateEdgeFixture(
-                vertices=[(x, 0), (x + x_length, y2)],
-                density=0,
-                friction=0.6,
-            )
-
-
 class Playground (Framework):
     name = "Car"
     description = "Keys: left = a, brake = s, right = d, hz down = q, hz up = e"
@@ -250,9 +235,10 @@ class Playground (Framework):
     def __init__(self):
         super(Playground, self).__init__()
         
-        track = Track(20)
+        terrain = Terrain(100)
         
-        track.put_to_world(self.world)
+        # create some terrain
+        terrain.put_to_world(self.world)
 
         # The ground -- create some terrain
 
@@ -297,6 +283,7 @@ class Playground (Framework):
             (-1.5, 0.2),]),
         [WheelRepresentation([-1., -1], 0., 0.4), WheelRepresentation([1, -1], 0., 0.4)])
         car, wheels, springs = c.put_to_world(self.world, (0.0, 10.), (1, 1), 4., 0.7, 1., 40.)
+
         self.car = car
         self.wheels = wheels
         self.springs = springs
