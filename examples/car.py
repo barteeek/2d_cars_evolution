@@ -23,89 +23,13 @@ from .bridge import create_bridge
 from math import sqrt
 import numpy as np
 from random import random
+from copy import copy
 
 from Box2D import (b2CircleShape, b2EdgeShape, b2FixtureDef, b2PolygonShape,
                    b2_pi)
 
 
-def create_car(world, offset, wheel_radius, wheel_separation, density=1.0,
-               wheel_friction=0.9, scale=(1.0, 1.0), chassis_vertices=None,
-               wheel_axis=(0.0, 1.0), wheel_torques=[20.0, 10.0],
-               wheel_drives=[True, False], hz=4.0, zeta=0.7, **kwargs):
-    """
-    """
-    x_offset, y_offset = offset
-    scale_x, scale_y = scale
-    if chassis_vertices is None:
-        chassis_vertices = [
-            (-1.5, -0.5),
-            (1.5, -0.5),
-            (1.5, 0.0),
-            (0.0, 0.9),
-            (-1.15, 0.9),
-            (-1.5, 0.2),
-        ]
-
-    chassis_vertices = [(scale_x * x, scale_y * y)
-                        for x, y in chassis_vertices]
-    radius_scale = sqrt(scale_x ** 2 + scale_y ** 2)
-    wheel_radius *= radius_scale
-
-    body = world.CreateDynamicBody(position=(x_offset, y_offset))
-
-    for i in range(len(chassis_vertices)):
-        vs = [(0.,0.), chassis_vertices[i], chassis_vertices[(i + 1) % len(chassis_vertices)]]
-        body.CreatePolygonFixture(shape=b2PolygonShape(vertices=vs),
-                density=density)
-    # chassis = world.CreateDynamicBody(
-    #     position=(x_offset, y_offset),
-    #     fixtures=b2FixtureDef(
-    #
-    #     )
-    # )
-    # chassis = world.CreateDynamicBody(
-    #     position=(x_offset, y_offset),
-    #     fixtures=b2FixtureDef(
-    #         shape=b2PolygonShape(vertices=chassis_vertices[3:6]),
-    #
-    #         density=density,
-    #     )
-    # )
-
-    wheels, springs = [], []
-    wheel_xs = [-wheel_separation * scale_x /
-                2.0, wheel_separation * scale_x / 2.0]
-    for x, torque, drive in zip(wheel_xs, wheel_torques, wheel_drives):
-        wheel = world.CreateDynamicBody(
-            position=(x_offset + x, y_offset - wheel_radius),
-            fixtures=b2FixtureDef(
-                shape=b2CircleShape(radius=wheel_radius),
-                density=density,
-            )
-        )
-        print ("POZYCJA: ", wheel.position)
-        spring = world.CreateWheelJoint(
-            bodyA=body,
-            bodyB=wheel,
-            anchor=wheel.position,
-            axis=wheel_axis,
-            motorSpeed=0.0,
-            maxMotorTorque=torque,
-            enableMotor=drive,
-            frequencyHz=hz,
-            dampingRatio=zeta
-        )
-
-        wheels.append(wheel)
-        springs.append(spring)
-
-    return body, wheels, springs
-
-
 class WheelRepresentation:
-    def __init__(self):
-        random()
-    
     def __init__(self, wheelVer, axleAngl, wheelRad):
         self.wheelVertex = wheelVer
         self.axleAngle = axleAngl
@@ -122,21 +46,31 @@ class WheelRepresentation:
         self.wheelRadius = chromosome[2]
     
     def random(self):
-        self.wheelVertex = np.random.rand()
+        self.wheelVertex = [random(), random()]
         self.axleAngle = np.random.rand()
         self.wheelRadius = np.random.rand()
 
+class CarBuilder:
+    def get_random_car():
+        return CarRepresentation()
 
 class CarRepresentation:
-    def __init__(self, damping_ratio, body_vectors, wheels):
+    def __init__(self):
+        self.random()
+    
+    def construct_car(self, damping_ratio, body_vectors, wheels):
         # body_vectors N x 2
+        self.damping_ratio = damping_ratio
+        self.body_vectors = body_vectors
+        self.wheels = wheels
         self.chromosome = \
             np.hstack([damping_ratio, body_vectors.reshape(-1), np.hstack([wheel.get_chromosome() for wheel in wheels])])
 
         self.body_vec_num = body_vectors.shape[0]
         self.wheel_num = len(wheels)
 
-    def put_to_world(self, world, offset, scale, hz, zeta, density, max_torque):
+    def put_to_world(self, world, offset = (0.0, 10.), scale = (1, 1), hz = 4.,
+                     zeta = 5., density = 1., max_torque = 40.):
         x_offset, y_offset = offset
         scale_x, scale_y = scale
 
@@ -186,6 +120,10 @@ class CarRepresentation:
 
             wheels.append(wheel)
             springs.append(spring)
+            
+            self.main_body = main_body
+            self.wheels_bodies = wheels
+            self.springs = springs
 
         return main_body, wheels, springs
 
@@ -193,17 +131,25 @@ class CarRepresentation:
         return self.chromosome
         
     def random(self):
-        dampingRatio = random()
-        body_directions = np.rand(8)
-        body_magnitudes = np.rand(8)
-        wheels = []
-        for i in range(2): # hardcoded number of wheels
-            wheels += WheelRepresentation()
-
+        self.damping_ratio = np.random.rand(1)
+        self.body_vectors = np.random.rand(6,2)
+        self.wheels = [WheelRepresentation([random(), random()], random(), random()) for _ in range(2)]
+        self.body_vec_num = self.body_vectors.shape[0]
+        
+        self.wheel_num = len(self.wheels)
         self.chromosome = \
-            np.hstack([dampingRatio, body_directions, body_magnitudes] \
-            + [wheel.get_chromosome() for wheel in wheels])
+            np.hstack([self.damping_ratio, self.body_vectors.reshape(-1), np.hstack([wheel.get_chromosome() for wheel in self.wheels])])
 
+        
+    def destroy(self, world):
+        world.DestroyBody(self.main_body)
+        for wheel in self.wheels_bodies:
+             world.DestroyBody(wheel)
+             
+    def make_copy(self):
+        result = type(self)()
+        result.construct_car(copy(self.damping_ratio), copy(self.body_vectors), copy(self.wheels))
+        return result
 
 class Terrain:
     def __init__(self, length):
@@ -231,6 +177,7 @@ class Playground (Framework):
     zeta = 0.7
     speed = 50
     bridgePlanks = 20
+    counter = 0
 
     def __init__(self):
         super(Playground, self).__init__()
@@ -240,41 +187,8 @@ class Playground (Framework):
         # create some terrain
         terrain.put_to_world(self.world)
 
-        # The ground -- create some terrain
-
-        # Teeter
-        """
-        body = self.world.CreateDynamicBody(
-            position=(140, 0.90),
-            fixtures=b2FixtureDef(
-                shape=b2PolygonShape(box=(10, 0.25)),
-                density=1.0,
-            )
-        )
-
-        self.world.CreateRevoluteJoint(
-            bodyA=ground,
-            bodyB=body,
-            anchor=body.position,
-            lowerAngle=-8.0 * b2_pi / 180.0,
-            upperAngle=8.0 * b2_pi / 180.0,
-            enableLimit=True,
-        )
-        # Bridge
-        create_bridge(self.world, ground, (2.0, 0.25),
-                      (161.0, -0.125), self.bridgePlanks)
-
-        # Boxes
-        for y_pos in [0.5, 1.5, 2.5, 3.5, 4.5]:
-            self.world.CreateDynamicBody(
-                position=(230, y_pos),
-                fixtures=b2FixtureDef(
-                    shape=b2PolygonShape(box=(0.5, 0.5)),
-                    density=0.5,
-                )
-            )
-        """
-        c = CarRepresentation(1., np.array([
+        self.c = CarRepresentation()
+        self.c.construct_car(1., np.array([
             (-1.5, -0.5),
             (1.5, -0.5),
             (1.5, 0.0),
@@ -282,7 +196,7 @@ class Playground (Framework):
             (-1.15, 0.9),
             (-1.5, 0.2),]),
         [WheelRepresentation([-1., -1], 0., 0.4), WheelRepresentation([1, -1], 0., 0.4)])
-        car, wheels, springs = c.put_to_world(self.world, (0.0, 10.), (1, 1), 4., 0.7, 1., 40.)
+        car, wheels, springs = self.c.put_to_world(self.world)
 
         self.car = car
         self.wheels = wheels
@@ -309,6 +223,3 @@ class Playground (Framework):
         self.viewCenter = (self.car.position.x, 20)
         self.Print("frequency = %g hz, damping ratio = %g" %
                    (self.hz, self.zeta))
-
-if __name__ == "__main__":
-    main(Playground)
