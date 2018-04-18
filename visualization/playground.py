@@ -14,7 +14,7 @@ class Playground (Framework):
     def __init__(self):
         super(Playground, self).__init__()
 
-        terrain = Terrain(100)
+        terrain = Terrain(100, 2.)
 
         # create some terrain
         terrain.put_to_world(self.world)

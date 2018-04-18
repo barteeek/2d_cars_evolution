@@ -129,7 +129,7 @@ class CarRepresentation:
         
     def random(self):
         self.damping_ratio = np.random.rand(1)
-        self.body_vectors = np.random.rand(6,2)
+        self.body_vectors = np.random.rand(6,2) * 2
         self.wheels = [WheelRepresentation([random(), random()], random(), random()) for _ in range(2)]
         self.body_vec_num = self.body_vectors.shape[0]
         
@@ -150,8 +150,9 @@ class CarRepresentation:
 
 
 class Terrain:
-    def __init__(self, length):
+    def __init__(self, length, friction):
         self.sticks = np.random.rand(length)
+        self.friction = friction
         self.flat_width = 20
 
     def put_to_world(self, world):
@@ -162,7 +163,7 @@ class Terrain:
         ground.CreateEdgeFixture(
             vertices=[(-self.flat_width, 0), (-self.flat_width, 100)],
             density=0,
-            friction=0.6,
+            friction=self.friction,
         )
 
         x, y1, dx = 20, 0, 5
@@ -171,7 +172,7 @@ class Terrain:
             ground.CreateEdgeFixture(
                 vertices=[(x, y1), (x + dx, y2)],
                 density=0,
-                friction=0.6,
+                friction=self.friction,
             )
             y1 = y2
             x += dx
@@ -180,14 +181,14 @@ class Terrain:
         ground.CreateEdgeFixture(
             vertices=[(x, y1), (x + self.flat_width, y1)],
             density=0,
-            friction=0.6,
+            friction=self.friction,
         )
 
         x += self.flat_width
         ground.CreateEdgeFixture(
             vertices=[(x, y1), (x, 100)],
             density=0,
-            friction=0.6,
+            friction=self.friction,
         )
 
         return (route_end, route_end + self.flat_width)
