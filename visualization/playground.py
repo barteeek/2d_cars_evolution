@@ -11,23 +11,12 @@ class Playground (Framework):
     bridgePlanks = 20
     counter = 0
 
-    def __init__(self, car):
+    def __init__(self, car, ter):
         super(Playground, self).__init__()
 
-        terrain = Terrain(100, 2.)
-
+        terrain = ter
         # create some terrain
         terrain.put_to_world(self.world)
-
-        self.c = CarRepresentation()
-        self.c.construct_car(1., np.array([
-            (-1.5, -0.5),
-            (1.5, -0.5),
-            (1.5, 0.0),
-            (0.0, 0.9),
-            (-1.15, 0.9),
-            (-1.5, 0.2),]),
-        [WheelRepresentation([-1., -1], 0., 0.4), WheelRepresentation([1, -1], 0., 0.4)])
         self.c = car
         car, wheels, springs = self.c.put_to_world(self.world)
 
@@ -56,3 +45,4 @@ class Playground (Framework):
         self.viewCenter = (self.car.position.x, self.car.position.y)
         self.Print("frequency = %g hz, damping ratio = %g" %
                    (self.hz, self.zeta))
+        self.Print("Position = %g" % (self.car.position.x,))

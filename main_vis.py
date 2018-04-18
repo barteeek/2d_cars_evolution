@@ -14,4 +14,7 @@ if __name__ == "__main__":
     with open(args.input_dir + '/' + 'iteration_' + args.iteration_it, 'rb') as handle:
         dict = pickle.load(handle)
 
-    main(Playground, dict["best"])
+    with open(args.input_dir + '/terrain', 'rb') as handle:
+        terrain = pickle.load(handle)
+
+    main(Playground, dict["best"], terrain)

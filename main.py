@@ -18,5 +18,5 @@ if __name__ == "__main__":
         exit(-1)
 
     alg = SGA(output_dir, population_size=100, number_of_offspring=100, mutation_probability=0.3, number_of_iterations=100)
-    simulator = Simulator(8, 3, 200, 1.5, 1)
+    simulator = Simulator(output_dir, 8, 3, 200, 30, 1)
     alg.make_evolution(simulator)

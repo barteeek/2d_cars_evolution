@@ -77,7 +77,7 @@ class CarRepresentation:
         self.wheel_num = len(self.wheels)
 
     def put_to_world(self, world, offset = (0.0, 10.), scale = (1, 1), hz = 4.,
-                     zeta = 5., density = 1., max_torque = 40.):
+                     zeta = 5., density = 40., max_torque = 40.):
         x_offset, y_offset = offset
         scale_x, scale_y = scale
 

@@ -2,19 +2,24 @@ import Box2D
 import numpy as np
 import threading
 import sys
+import pickle
 
 from evo.world_entities import CarBuilder
 from evo.world_entities import Terrain
 
 
 class Simulator:
-    def __init__(self, vel_iters, pos_iters, route_len, friction, num_workers):
+    def __init__(self, output_dir, vel_iters, pos_iters, route_len, friction, num_workers):
         self.carBuilder = CarBuilder()
         self.terrain = Terrain(route_len, friction)
         self.vel_iters = vel_iters
         self.pos_iters = pos_iters
         self.speed = 30
         self.num_workers = num_workers
+        self.dump_dir = output_dir
+
+        with open(self.dump_dir + "/terrain", 'wb') as handle:
+            pickle.dump(self.terrain, handle)
 
         self.worlds = []
         for i in range(num_workers):
@@ -50,8 +55,9 @@ class Simulator:
         step = 5
         prev_x = np.inf
         springs[0].motorSpeed = -self.speed
+
         self._run(step, world_it)
-        number_of_iters = 0.
+        number_of_iters = step
         while (not (self.end_of_route[0] <= body.position[0] <= self.end_of_route[1])) and \
             np.abs(prev_x - body.position[0]) >= 10e-4:
             self._run(step, world_it)
