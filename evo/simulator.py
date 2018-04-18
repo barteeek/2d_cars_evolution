@@ -1,6 +1,7 @@
 import Box2D
 import numpy as np
 import threading
+import sys
 
 from evo.world_entities import CarBuilder
 from evo.world_entities import Terrain
@@ -66,8 +67,10 @@ class Simulator:
             for j in range(np.min((len(cars) - i, self.num_workers))):
                 threads += [threading.Thread(target=self.worker, args=(self.worlds, j, i + j, cars[i + j], scores))]
                 threads[-1].start()
-                print ("noonooo")
             for j in range(np.min((len(cars) - i, self.num_workers))):
                 threads[j].join()
             i += self.num_workers
+            sys.stdout.write("\rscores computed in %d%%" % int((i*100.)/float(len(cars))))
+            sys.stdout.flush()
+        sys.stdout.write("\n")
         return scores

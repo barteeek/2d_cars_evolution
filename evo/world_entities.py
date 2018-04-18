@@ -67,13 +67,14 @@ class CarRepresentation:
         self.wheel_num = len(wheels)
         
     def construct_from_chromosome(self, chromosome):
-        self.damping_ratio = chromosome[0]
-        self.body_vectors = np.array(chromosome[1:13]).view(6, 2)
-        self.wheels = [WheelRepresentation(chromosome[13:15], chromosome[15], chromosome[16]),
-                       WheelRepresentation(chromosome[17:19], chromosome[19], chromosome[20])]
+        chromosome_list = chromosome.tolist()
+        self.damping_ratio = chromosome_list[0]
+        self.body_vectors = chromosome[1:13].reshape(6, 2)
+        self.wheels = [WheelRepresentation(chromosome_list[13:15], chromosome_list[15], chromosome_list[16]),
+                       WheelRepresentation(chromosome_list[17:19], chromosome_list[19], chromosome_list[20])]
         self.chromosome = chromosome
-        self.body_vec_num = body_vectors.shape[0]
-        self.wheel_num = len(wheels)
+        self.body_vec_num = self.body_vectors.shape[0]
+        self.wheel_num = len(self.wheels)
 
     def put_to_world(self, world, offset = (0.0, 10.), scale = (1, 1), hz = 4.,
                      zeta = 5., density = 1., max_torque = 40.):

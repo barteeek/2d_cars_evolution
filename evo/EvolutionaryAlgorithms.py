@@ -5,7 +5,7 @@ import numpy as np
 def simple_crossover(car1, car2):
     chromosome1 = car1.get_chromosome()
     chromosome2 = car2.get_chromosome()
-    to_cut = np.random.choice(len(ind1), 2, False)
+    to_cut = np.random.choice(len(chromosome1), 2, False)
     to_cut_left, to_cut_right = to_cut.min(), to_cut.max()
     chromosome1[to_cut_left:to_cut_right], chromosome2[to_cut_left:to_cut_right] = \
         chromosome2[to_cut_left:to_cut_right], chromosome1[to_cut_left:to_cut_right]
@@ -21,7 +21,7 @@ def simple_crossover(car1, car2):
 
 class SGA:
     def __init__(self, population_size=500, chromosome_length=21, number_of_offspring=500, \
-        crossover_probability=0.95, mutation_probability=0.25, number_of_iterations=50, \
+        crossover_probability=0.95, mutation_probability=0.1, number_of_iterations=50, \
         mutation_fun=lambda *args: args, crossover_fun=simple_crossover):
         self.population_size = population_size
         self.chromosome_length = chromosome_length
@@ -35,6 +35,7 @@ class SGA:
     def make_evolution(self, simulator):
         self.simulator = simulator
         self.best_objective_value = np.Inf
+        self.counter = 0
         best_individual = None
 
         # generating an initial population
@@ -56,7 +57,8 @@ class SGA:
         return best_individual, best_score
     
     def make_step(self, population, objective_values, best_car):
-        print ("in make_step")
+        print ("in make_step ", self.counter)
+        self.counter += 1
         # selecting the parent indices by the roulette wheel method
         fitness_values = objective_values.max() - objective_values
         if fitness_values.sum() > 0:
@@ -80,8 +82,10 @@ class SGA:
 
         # mutating the children population
         for i in range(self.number_of_offspring):
-            if np.random.random() < self.mutation_probability:
-                children_population[i] = children_population[i]
+            chromosome = children_population[i].get_chromosome()
+            for i in range(chromosome.shape[0]):
+                if np.random.random() < self.mutation_probability:
+                    chromosome[i] = np.random.random()
 
         # evaluating the objective function on the children population
         children_objective_values = self.simulator.get_scores(children_population)
