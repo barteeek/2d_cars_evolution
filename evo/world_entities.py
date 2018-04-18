@@ -159,6 +159,12 @@ class Terrain:
             shapes=b2EdgeShape(vertices=[(-self.flat_width, 0), (self.flat_width, 0)])
         )
 
+        ground.CreateEdgeFixture(
+            vertices=[(-self.flat_width, 0), (-self.flat_width, 100)],
+            density=0,
+            friction=0.6,
+        )
+
         x, y1, dx = 20, 0, 5
         vertices = self.sticks
         for y2 in vertices * 2:  # iterate through vertices twice
@@ -172,16 +178,16 @@ class Terrain:
 
         route_end = x
         ground.CreateEdgeFixture(
-                vertices=[(x, y1), (x + self.flat_width, y1)],
-                density=0,
-                friction=0.6,
-            )
+            vertices=[(x, y1), (x + self.flat_width, y1)],
+            density=0,
+            friction=0.6,
+        )
 
         x += self.flat_width
         ground.CreateEdgeFixture(
-                vertices=[(x, y1), (x, 100)],
-                density=0,
-                friction=0.6,
-            )
+            vertices=[(x, y1), (x, 100)],
+            density=0,
+            friction=0.6,
+        )
 
         return (route_end, route_end + self.flat_width)
