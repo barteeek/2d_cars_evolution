@@ -2,10 +2,27 @@ from .world_entities import CarRepresentation
 
 import numpy as np
 
+def simple_crossover(car1, car2):
+    chromosome1 = car1.get_chromosome()
+    chromosome2 = car2.get_chromosome()
+    to_cut = np.random.choice(len(ind1), 2, False)
+    to_cut_left, to_cut_right = to_cut.min(), to_cut.max()
+    chromosome1[to_cut_left:to_cut_right], chromosome2[to_cut_left:to_cut_right] = \
+        chromosome2[to_cut_left:to_cut_right], chromosome1[to_cut_left:to_cut_right]
+
+    kid1 = CarRepresentation()
+    kid2 = CarRepresentation()
+
+    kid1.construct_from_chromosome(chromosome1)
+    kid2.construct_from_chromosome(chromosome2)
+
+    return kid1, kid2
+
+
 class SGA:
     def __init__(self, population_size=500, chromosome_length=21, number_of_offspring=500, \
         crossover_probability=0.95, mutation_probability=0.25, number_of_iterations=50, \
-        mutation_fun=lambda *args: args, crossover_fun=lambda *args: args):
+        mutation_fun=lambda *args: args, crossover_fun=simple_crossover):
         self.population_size = population_size
         self.chromosome_length = chromosome_length
         self.number_of_offspring = number_of_offspring
@@ -29,7 +46,7 @@ class SGA:
         objective_values = self.simulator.get_scores(population)
             
         self.costs = np.zeros(self.number_of_iterations)
-        
+
         for t in range(self.number_of_iterations):
             population, objective_values, best_individual = \
                 self.make_step(population, objective_values, best_individual)
@@ -53,10 +70,9 @@ class SGA:
         children_population = [None]*self.population_size
         for i in range(int(self.number_of_offspring/2)):
             if np.random.random() < self.crossover_probability:
-                children_population[2*i], children_population[2*i+1] = population[parent_indices[2*i]].make_copy(), population[parent_indices[2*i+1]].make_copy()
-                # children_population[2*i, :], children_population[2*i+1, :] = \
-                #    self.crossover_fun(population[parent_indices[2*i], :].copy(), \
-                #        population[parent_indices[2*i+1], :].copy())
+                children_population[2*i], children_population[2*i+1] = \
+                   self.crossover_fun(population[parent_indices[2*i]].make_copy(), \
+                       population[parent_indices[2*i+1]].make_copy())
             else:
                 children_population[2*i], children_population[2*i+1] = population[parent_indices[2*i]].make_copy(), population[parent_indices[2*i+1]].make_copy()
         if np.mod(self.number_of_offspring, 2) == 1:
