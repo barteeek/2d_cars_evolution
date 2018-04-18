@@ -51,7 +51,7 @@ class WheelRepresentation:
         self.wheelRadius = np.random.rand()
 
 class CarBuilder:
-    def get_random_car():
+    def get_random_car(self):
         return CarRepresentation()
 
 class CarRepresentation:
@@ -151,9 +151,12 @@ class CarRepresentation:
         result.construct_car(copy(self.damping_ratio), copy(self.body_vectors), copy(self.wheels))
         return result
 
+
 class Terrain:
     def __init__(self, length):
+        
         self.sticks = np.random.rand(length)
+
     def put_to_world(self, world):
         ground = world.CreateStaticBody(
             shapes=b2EdgeShape(vertices=[(-20, 0), (20, 0)])

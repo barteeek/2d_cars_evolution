@@ -1,2 +1,1 @@
-__all__ = ["framework",
-           "settings"]
+__all__ = ["framework", "bridge", "settings"]

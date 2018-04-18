@@ -1,4 +1,4 @@
-from .car import CarRepresentation
+from .world_entities import CarRepresentation
 
 import numpy as np
 
@@ -18,13 +18,12 @@ class SGA:
     def make_evolution(self, simulator):
         self.simulator = simulator
         self.best_objective_value = np.Inf
-        best_car = CarRepresentation()
+        best_individual = None
 
         # generating an initial population
         population = []
         for i in range(self.population_size):
-            current_car = CarRepresentation()
-            population += [current_car]
+            population += [simulator.get_random_individual()]
 
         # evaluating the objective function on the current population
         objective_values = self.simulator.get_scores(population)
@@ -32,11 +31,12 @@ class SGA:
         self.costs = np.zeros(self.number_of_iterations)
         
         for t in range(self.number_of_iterations):
-            population, objective_values, best_car = self.make_step(population, objective_values, best_car)
+            population, objective_values, best_individual = \
+                self.make_step(population, objective_values, best_individual)
             
-        best_score = self.simulator.get_scores([best_car])
+        best_score = self.simulator.get_scores([best_individual])
         
-        return self.best_car, best_score
+        return best_individual, best_score
     
     def make_step(self, population, objective_values, best_car):
         print ("in make_step")
