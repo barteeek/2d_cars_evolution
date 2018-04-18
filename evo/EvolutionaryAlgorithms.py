@@ -36,7 +36,7 @@ class SGA:
     
     def make_evolution(self, simulator):
         self.simulator = simulator
-        self.best_objective_value = np.Inf
+        self.best_objective_value = -np.Inf
         self.counter = 0
         best_individual = None
 
@@ -66,14 +66,13 @@ class SGA:
                        " mean: " + str(np.mean(objective_values)))
 
         best_score = self.simulator.get_scores([best_individual])
-
         return best_individual, best_score
     
     def make_step(self, population, objective_values, best_car):
         print ("in make_step ", self.counter)
         self.counter += 1
         # selecting the parent indices by the roulette wheel method
-        fitness_values = objective_values.max() - objective_values
+        fitness_values = objective_values - objective_values.min()
         if fitness_values.sum() > 0:
             fitness_values = fitness_values / fitness_values.sum()
         else:
@@ -116,8 +115,8 @@ class SGA:
         # self.costs[t] = objective_values[0]
         
         # recording some statistics
-        if self.best_objective_value > objective_values[0]:
+        if self.best_objective_value < objective_values[0]:
             self.best_objective_value = objective_values[0]
-            best_car= population[0]
+            best_car = population[-1]
         
         return population, objective_values, best_car
