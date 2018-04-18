@@ -17,6 +17,6 @@ if __name__ == "__main__":
         print ("output dir exists")
         exit(-1)
 
-    alg = SGA('output', population_size=10, number_of_offspring=10,)
+    alg = SGA(output_dir, population_size=10, number_of_offspring=10,)
     simulator = Simulator(8, 3, 100, 1.5, 1)
     alg.make_evolution(simulator)
