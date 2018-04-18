@@ -127,10 +127,6 @@ class CarRepresentation:
 
             wheels.append(wheel)
             springs.append(spring)
-            
-            self.main_body = main_body
-            self.wheels_bodies = wheels
-            self.springs = springs
 
         return main_body, wheels, springs
 
@@ -146,12 +142,6 @@ class CarRepresentation:
         self.wheel_num = len(self.wheels)
         self.chromosome = \
             np.hstack([self.damping_ratio, self.body_vectors.reshape(-1), np.hstack([wheel.get_chromosome() for wheel in self.wheels])])
-
-        
-    def destroy(self, world):
-        world.DestroyBody(self.main_body)
-        for wheel in self.wheels_bodies:
-             world.DestroyBody(wheel)
              
     def make_copy(self):
         result = type(self)()

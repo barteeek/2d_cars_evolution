@@ -25,7 +25,7 @@ class Simulator:
         body, wheels, springs = car.put_to_world(worlds[world_it])
         self.wait_until_falls_down(body, world_it)
         scores[car_it] = self.run(body, springs, world_it)
-        car.destroy(worlds[world_it])
+        self.destroy_car(worlds[world_it], body, wheels)
     
     def get_random_individual(self):
         return self.carBuilder.get_random_car()
@@ -74,3 +74,8 @@ class Simulator:
             sys.stdout.flush()
         sys.stdout.write("\n")
         return scores
+
+    def destroy_car(self, world, body, wheels):
+        world.DestroyBody(body)
+        for wheel in wheels:
+             world.DestroyBody(wheel)
