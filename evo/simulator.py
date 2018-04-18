@@ -24,7 +24,7 @@ class Simulator:
         body, wheels, springs = car.put_to_world(worlds[world_it])
         self.wait_until_falls_down(body, world_it)
         scores[car_it] = self.run(body, springs, world_it)
-        car.destroy(worlds[world_it])
+        self.destroy_car(worlds[world_it], body, wheels)
     
     def get_random_individual(self):
         return self.carBuilder.get_random_car()
@@ -66,8 +66,12 @@ class Simulator:
             for j in range(np.min((len(cars) - i, self.num_workers))):
                 threads += [threading.Thread(target=self.worker, args=(self.worlds, j, i + j, cars[i + j], scores))]
                 threads[-1].start()
-                print ("noonooo")
             for j in range(np.min((len(cars) - i, self.num_workers))):
                 threads[j].join()
             i += self.num_workers
         return scores
+
+    def destroy_car(self, world, body, wheels):
+        world.DestroyBody(body)
+        for wheel in wheels:
+             world.DestroyBody(wheel)

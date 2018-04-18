@@ -1,9 +1,10 @@
 from .world_entities import CarRepresentation
 
 import numpy as np
+import pickle
 
 class SGA:
-    def __init__(self, population_size=500, chromosome_length=21, number_of_offspring=500, \
+    def __init__(self, dump_dir, population_size=500, chromosome_length=21, number_of_offspring=500, \
         crossover_probability=0.95, mutation_probability=0.25, number_of_iterations=50, \
         mutation_fun=lambda *args: args, crossover_fun=lambda *args: args):
         self.population_size = population_size
@@ -14,6 +15,7 @@ class SGA:
         self.number_of_iterations = number_of_iterations
         self.mutation_fun = mutation_fun
         self.crossover_fun = crossover_fun
+        self.dump_dir = dump_dir
     
     def make_evolution(self, simulator):
         self.simulator = simulator
@@ -27,15 +29,26 @@ class SGA:
 
         # evaluating the objective function on the current population
         objective_values = self.simulator.get_scores(population)
-            
+
         self.costs = np.zeros(self.number_of_iterations)
-        
+
         for t in range(self.number_of_iterations):
             population, objective_values, best_individual = \
                 self.make_step(population, objective_values, best_individual)
-            
+            with open(self.dump_dir + "/iteration_" + str(t), 'wb') as handle:
+                pickle.dump({"best":best_individual, "population":population}, handle)
+            with open(self.dump_dir + "/logs", "a") as file:
+                file.write("Iteration: " + str(t) +
+                           " min: " + str(np.min(objective_values)) +
+                           " max: " + str(np.max(objective_values)) +
+                           " mean: " + str(np.mean(objective_values)) + '\n')
+            print ("Iteration: " + str(t) +
+                       " min: " + str(np.min(objective_values)) +
+                       " max: " + str(np.max(objective_values)) +
+                       " mean: " + str(np.mean(objective_values)))
+
         best_score = self.simulator.get_scores([best_individual])
-        
+
         return best_individual, best_score
     
     def make_step(self, population, objective_values, best_car):
