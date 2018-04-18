@@ -514,7 +514,7 @@ def main(test_class):
 
 
 if __name__ == '__main__':
-    print('Please run one of the examples directly. This is just the base for '
+    print('Please run one of the visualization directly. This is just the base for '
           'all of the frameworks.')
     exit(1)
 

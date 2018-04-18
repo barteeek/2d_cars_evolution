@@ -1,8 +1,6 @@
 from .car import CarRepresentation
-from .simulator import Simulator
 
 import numpy as np
-import copy
 
 class SGA:
     def __init__(self, population_size=500, chromosome_length=21, number_of_offspring=500, \
@@ -88,8 +86,3 @@ class SGA:
             best_car= population[0]
         
         return population, objective_values, best_car
-
-if __name__ == "__main__":
-    alg = SGA()
-    simulator = Simulator()
-    alg.make_evolution(simulator)

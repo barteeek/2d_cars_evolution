@@ -29,7 +29,7 @@ backend, you can remove references to that file here and import this module
 directly in your test.
 
 To use this backend, try:
- % python -m examples.web --backend simple
+ % python -m visualization.web --backend simple
 
 NOTE: Examples with Step() re-implemented are not yet supported, as I wanted
 to do away with the Settings class. This means the following will definitely

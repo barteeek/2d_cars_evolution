@@ -18,8 +18,8 @@
 # misrepresented as being the original software.
 # 3. This notice may not be removed or altered from any source distribution.
 
-from .framework import (Framework, Keys, main)
-from .bridge import create_bridge
+from visualization.framework import (Framework, Keys, main)
+from visualization.bridge import create_bridge
 from math import sqrt
 import numpy as np
 from random import random
