@@ -18,8 +18,6 @@
 # misrepresented as being the original software.
 # 3. This notice may not be removed or altered from any source distribution.
 
-from visualization.framework import (Framework, Keys, main)
-from visualization.bridge import create_bridge
 from math import sqrt
 import numpy as np
 from random import random
@@ -27,7 +25,6 @@ from copy import copy
 
 from Box2D import (b2CircleShape, b2EdgeShape, b2FixtureDef, b2PolygonShape,
                    b2_pi)
-
 
 class WheelRepresentation:
     def __init__(self, wheelVer, axleAngl, wheelRad):
@@ -154,12 +151,12 @@ class CarRepresentation:
 
 class Terrain:
     def __init__(self, length):
-        
         self.sticks = np.random.rand(length)
+        self.flat_width = 20
 
     def put_to_world(self, world):
         ground = world.CreateStaticBody(
-            shapes=b2EdgeShape(vertices=[(-20, 0), (20, 0)])
+            shapes=b2EdgeShape(vertices=[(-self.flat_width, 0), (self.flat_width, 0)])
         )
 
         x, y1, dx = 20, 0, 5
@@ -173,56 +170,18 @@ class Terrain:
             y1 = y2
             x += dx
 
-class Playground (Framework):
-    name = "Car"
-    description = "Keys: left = a, brake = s, right = d, hz down = q, hz up = e"
-    hz = 4
-    zeta = 0.7
-    speed = 50
-    bridgePlanks = 20
-    counter = 0
+        route_end = x
+        ground.CreateEdgeFixture(
+                vertices=[(x, y1), (x + self.flat_width, y1)],
+                density=0,
+                friction=0.6,
+            )
 
-    def __init__(self):
-        super(Playground, self).__init__()
-        
-        terrain = Terrain(100)
-        
-        # create some terrain
-        terrain.put_to_world(self.world)
+        x += self.flat_width
+        ground.CreateEdgeFixture(
+                vertices=[(x, y1), (x, 100)],
+                density=0,
+                friction=0.6,
+            )
 
-        self.c = CarRepresentation()
-        self.c.construct_car(1., np.array([
-            (-1.5, -0.5),
-            (1.5, -0.5),
-            (1.5, 0.0),
-            (0.0, 0.9),
-            (-1.15, 0.9),
-            (-1.5, 0.2),]),
-        [WheelRepresentation([-1., -1], 0., 0.4), WheelRepresentation([1, -1], 0., 0.4)])
-        car, wheels, springs = self.c.put_to_world(self.world)
-
-        self.car = car
-        self.wheels = wheels
-        self.springs = springs
-
-    def Keyboard(self, key):
-        if key == Keys.K_a:
-            self.springs[0].motorSpeed = self.speed
-        elif key == Keys.K_s:
-            self.springs[0].motorSpeed = 0
-        elif key == Keys.K_d:
-            self.springs[0].motorSpeed = -self.speed
-        elif key in (Keys.K_q, Keys.K_e):
-            if key == Keys.K_q:
-                self.hz = max(0, self.hz - 1.0)
-            else:
-                self.hz += 1.0
-
-            for spring in self.springs:
-                spring.springFrequencyHz = self.hz
-
-    def Step(self, settings):
-        super(Playground, self).Step(settings)
-        self.viewCenter = (self.car.position.x, 20)
-        self.Print("frequency = %g hz, damping ratio = %g" %
-                   (self.hz, self.zeta))
+        return (route_end, route_end + self.flat_width)
