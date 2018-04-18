@@ -13,7 +13,7 @@ class Simulator:
         self.terrain = Terrain(route_len, friction)
         self.vel_iters = vel_iters
         self.pos_iters = pos_iters
-        self.speed = 50
+        self.speed = 30
         self.num_workers = num_workers
 
         self.worlds = []
@@ -47,19 +47,19 @@ class Simulator:
                 self.worlds[world_it].ClearForces()
 
     def run(self, body, springs, world_it):
-        epsilon = 10
+        step = 5
         prev_x = np.inf
         springs[0].motorSpeed = -self.speed
-        self._run(epsilon, world_it)
+        self._run(step, world_it)
         number_of_iters = 0.
         while (not (self.end_of_route[0] <= body.position[0] <= self.end_of_route[1])) and \
             np.abs(prev_x - body.position[0]) >= 10e-4:
-            self._run(epsilon, world_it)
+            self._run(step, world_it)
             prev_x = body.position[0]
-            number_of_iters += epsilon
+            number_of_iters += step
 
         if self.end_of_route[0] <= body.position[0] <= self.end_of_route[1]:
-            return self.end_of_route[0] - 1./number_of_iters
+            return self.end_of_route[0] + 1./number_of_iters
         return body.position[0]
 
     def get_scores(self, cars):

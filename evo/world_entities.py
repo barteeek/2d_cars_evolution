@@ -151,7 +151,7 @@ class CarRepresentation:
 
 class Terrain:
     def __init__(self, length, friction):
-        self.sticks = np.random.rand(length)
+        self.sticks = np.random.rand(length) * 3.0
         self.friction = friction
         self.flat_width = 20
 

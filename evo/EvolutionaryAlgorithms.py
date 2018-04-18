@@ -115,8 +115,8 @@ class SGA:
         # self.costs[t] = objective_values[0]
         
         # recording some statistics
-        if self.best_objective_value < objective_values[0]:
-            self.best_objective_value = objective_values[0]
+        if self.best_objective_value < objective_values[-1]:
+            self.best_objective_value = objective_values[-1]
             best_car = population[-1]
         
         return population, objective_values, best_car
