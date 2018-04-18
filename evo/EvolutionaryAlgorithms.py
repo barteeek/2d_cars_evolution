@@ -81,8 +81,9 @@ class SGA:
         parent_indices = np.random.choice(self.population_size, self.number_of_offspring, True,
                                           fitness_values).astype(np.int64)
 
+
         # creating the children population
-        children_population = [None]*self.population_size
+        children_population = [None]*self.number_of_offspring
         for i in range(int(self.number_of_offspring/2)):
             if np.random.random() < self.crossover_probability:
                 children_population[2*i], children_population[2*i+1] = \
@@ -96,9 +97,10 @@ class SGA:
         # mutating the children population
         for i in range(self.number_of_offspring):
             chromosome = children_population[i].get_chromosome()
-            for i in range(chromosome.shape[0]):
+            for j in range(chromosome.shape[0]):
                 if np.random.random() < self.mutation_probability:
-                    chromosome[i] = np.random.random()
+                    chromosome[j] = np.random.random()
+            children_population[i].construct_from_chromosome(chromosome)
 
         # evaluating the objective function on the children population
         children_objective_values = self.simulator.get_scores(children_population)
@@ -108,8 +110,8 @@ class SGA:
         population = np.hstack([population, children_population])
 
         I = np.argsort(objective_values)
-        population = population[I[:self.population_size]]
-        objective_values = objective_values[I[:self.population_size]]
+        population = population[I[-self.population_size:]]
+        objective_values = objective_values[I[-self.population_size:]]
         
         # self.costs[t] = objective_values[0]
         
