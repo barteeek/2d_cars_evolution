@@ -502,12 +502,12 @@ class FrameworkBase(b2ContactListener):
         pass
 
 
-def main(test_class):
+def main(test_class, *args):
     """
     Loads the test class and executes it.
     """
     print("Loading %s..." % test_class.name)
-    test = test_class()
+    test = test_class(*args)
     if fwSettings.onlyInit:
         return
     test.run()

@@ -11,7 +11,7 @@ class Playground (Framework):
     bridgePlanks = 20
     counter = 0
 
-    def __init__(self):
+    def __init__(self, car):
         super(Playground, self).__init__()
 
         terrain = Terrain(100, 2.)
@@ -28,7 +28,7 @@ class Playground (Framework):
             (-1.15, 0.9),
             (-1.5, 0.2),]),
         [WheelRepresentation([-1., -1], 0., 0.4), WheelRepresentation([1, -1], 0., 0.4)])
-        self.c = CarRepresentation()
+        self.c = car
         car, wheels, springs = self.c.put_to_world(self.world)
 
         self.car = car
