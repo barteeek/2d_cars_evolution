@@ -3,5 +3,5 @@ from evo.EvolutionaryAlgorithms import SGA
 
 if __name__ == "__main__":
     alg = SGA()
-    simulator = Simulator(8, 3, 100)
+    simulator = Simulator(8, 3, 100, 1.5, 10)
     alg.make_evolution(simulator)
