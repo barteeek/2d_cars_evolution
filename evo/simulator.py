@@ -18,7 +18,7 @@ class Simulator:
 
         self.worlds = []
         for i in range(num_workers):
-            self.worlds += [Box2D.b2World()]
+            self.worlds += [Box2D.b2World((0, -9.82))]
             self.end_of_route = self.terrain.put_to_world(self.worlds[-1])
 
     def worker(self, worlds, world_it, car_it, car, scores):

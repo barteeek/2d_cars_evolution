@@ -53,6 +53,6 @@ class Playground (Framework):
 
     def Step(self, settings):
         super(Playground, self).Step(settings)
-        self.viewCenter = (self.car.position.x, 20)
+        self.viewCenter = (self.car.position.x, self.car.position.y)
         self.Print("frequency = %g hz, damping ratio = %g" %
                    (self.hz, self.zeta))
