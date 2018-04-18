@@ -110,13 +110,14 @@ class SGA:
 
         I = np.argsort(objective_values)
         population = population[I[-self.population_size:]]
+        z = objective_values[I[-self.population_size:]]
         objective_values = objective_values[I[-self.population_size:]]
         
         # self.costs[t] = objective_values[0]
         
         # recording some statistics
-        if self.best_objective_value < objective_values[0]:
-            self.best_objective_value = objective_values[0]
+        if self.best_objective_value < objective_values[-1]:
+            self.best_objective_value = objective_values[-1]
             best_car = population[-1]
         
         return population, objective_values, best_car
