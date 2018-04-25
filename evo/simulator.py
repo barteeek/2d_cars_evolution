@@ -52,21 +52,27 @@ class Simulator:
                 self.worlds[world_it].ClearForces()
 
     def run(self, body, springs, world_it):
-        step = 5
-        prev_x = np.inf
+        step = 1
+        prev_x = -np.inf
         springs[0].motorSpeed = -self.speed
-
         self._run(step, world_it)
         number_of_iters = step
-        while (not (self.end_of_route[0] <= body.position[0] <= self.end_of_route[1])) and \
-            np.abs(prev_x - body.position[0]) >= 10e-4:
+        the_best_x_it = step
+        current_it = step
+        the_best_x = body.position.x
+        while (not (self.end_of_route[0] <= body.position.x <= self.end_of_route[1])) and \
+            current_it - the_best_x_it <= 10 and current_it <= 1000: #and np.abs(body.position.x - prev_x) >= step * 1e-02 :
             self._run(step, world_it)
-            prev_x = body.position[0]
             number_of_iters += step
+            if body.position.x > the_best_x:
+                the_best_x = body.position.x
+                the_best_x_it = current_it
+            current_it += step
+            prev_x = body.position.x
 
         if self.end_of_route[0] <= body.position[0] <= self.end_of_route[1]:
             return self.end_of_route[0] + 1./number_of_iters
-        return body.position[0]
+        return body.position.x
 
     def get_scores(self, cars):
         scores = np.zeros(len(cars))

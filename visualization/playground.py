@@ -7,7 +7,7 @@ class Playground (Framework):
     description = "Keys: left = a, brake = s, right = d, hz down = q, hz up = e"
     hz = 4
     zeta = 0.7
-    speed = 50
+    speed = 30
     bridgePlanks = 20
     counter = 0
 
