@@ -201,5 +201,6 @@ class Terrain:
             density=0,
             friction=self.friction,
         )
+        self.route_end = route_end
 
         return (route_end, route_end + self.flat_width)
