@@ -27,25 +27,23 @@ from Box2D import (b2CircleShape, b2EdgeShape, b2FixtureDef, b2PolygonShape,
                    b2_pi)
 
 class WheelRepresentation:
-    def __init__(self, wheelVer, axleAngl, wheelRad):
-        self.wheelVertex = wheelVer
-        self.axleAngle = axleAngl
+    def __init__(self, vertex_it, wheelRad):
+        self.vertex_it = vertex_it
         self.wheelRadius = wheelRad
     
     def get_chromosome(self):
-        return np.array([self.wheelVertex[0], self.wheelVertex[1], self.axleAngle, self.wheelRadius])
+        return np.array([self.vertex_it, self.wheelRadius])
 
     def put_chromosome(self, chromosome):
         assert(chromosome.shape == (3,))
 
-        self.wheelVertex = chromosome[0]
-        self.axleAngle = chromosome[1]
+        self.vertex_it = chromosome[0]
         self.wheelRadius = chromosome[2]
     
-    def random(self):
-        self.wheelVertex = [random(), random()]
-        self.axleAngle = np.random.rand()
-        self.wheelRadius = np.random.rand()
+    # def random(self):
+    #     self.vertex_it =
+    #     self.axleAngle = np.random.rand()
+    #     self.wheelRadius = np.random.rand()
 
 class CarBuilder:
     def get_random_car(self):
@@ -53,7 +51,7 @@ class CarBuilder:
 
 class CarRepresentation:
     def __init__(self):
-        self.random()
+        self.random(6)
     
     def construct_car(self, damping_ratio, body_vectors, wheels):
         # body_vectors N x 2
@@ -70,14 +68,15 @@ class CarRepresentation:
         chromosome_list = chromosome.tolist()
         self.damping_ratio = chromosome_list[0]
         self.body_vectors = chromosome[1:13].reshape(6, 2)
-        self.wheels = [WheelRepresentation(chromosome_list[13:15], chromosome_list[15], chromosome_list[16]),
-                       WheelRepresentation(chromosome_list[17:19], chromosome_list[19], chromosome_list[20])]
+        self.wheels = [WheelRepresentation(chromosome_list[13], chromosome_list[14]),
+                       WheelRepresentation(chromosome_list[15], chromosome_list[16])]
         self.chromosome = chromosome
         self.body_vec_num = self.body_vectors.shape[0]
         self.wheel_num = len(self.wheels)
 
-    def put_to_world(self, world, offset = (0.0, 10.), scale = (1, 1), hz = 4.,
-                     zeta = 5., density = 40., max_torque = 40.):
+    def put_to_world(self, world, offset=(0.0, 10.), scale=(1, 1), hz=4.,
+                     zeta=5., density=40., max_torque=40.):
+
         x_offset, y_offset = offset
         scale_x, scale_y = scale
 
@@ -100,10 +99,19 @@ class CarRepresentation:
         enableMotor[0] = True
 
         for i in range(self.wheel_num):
-            vertex_x = self.chromosome[4 * i + it_offset]
-            vertex_y = self.chromosome[4 * i + it_offset + 1]
-            axle_angle = self.chromosome[4 * i + it_offset + 2]
-            radius = radius_scale * self.chromosome[4 * i + it_offset + 3]
+            #vertex_x = self.chromosome[4 * i + it_offset]
+            #vertex_y = self.chromosome[4 * i + it_offset + 1]
+            #axle_angle = self.chromosome[4 * i + it_offset + 2]
+            #radius = radius_scale * self.chromosome[4 * i + it_offset + 3]
+
+            vertex_it = np.clip(int(self.chromosome[2 * i + it_offset]), -1, self.body_vec_num)
+            if vertex_it == -1:
+                continue
+
+            radius = radius_scale * self.chromosome[2 * i + it_offset + 1]
+
+            vertex_x = self.chromosome[2 * vertex_it + 1]
+            vertex_y = self.chromosome[2 * vertex_it + 2]
 
             wheel = world.CreateDynamicBody(
                 position=(x_offset + vertex_x * scale_x, y_offset + vertex_y * scale_y),
@@ -133,10 +141,10 @@ class CarRepresentation:
     def get_chromosome(self):
         return self.chromosome
         
-    def random(self):
+    def random(self, body_vec_num):
         self.damping_ratio = np.random.rand(1)
-        self.body_vectors = np.random.rand(6,2) * 2
-        self.wheels = [WheelRepresentation([random(), random()], random(), random()) for _ in range(2)]
+        self.body_vectors = np.random.rand(body_vec_num, 2) * 2
+        self.wheels = [WheelRepresentation(np.random.randint(-1, body_vec_num), random()) for _ in range(2)]
         self.body_vec_num = self.body_vectors.shape[0]
         
         self.wheel_num = len(self.wheels)

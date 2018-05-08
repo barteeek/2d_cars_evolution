@@ -54,7 +54,8 @@ class Simulator:
     def run(self, body, springs, world_it):
         step = 1
         prev_x = -np.inf
-        springs[0].motorSpeed = -self.speed
+        if len(springs) > 0:
+            springs[0].motorSpeed = -self.speed
         self._run(step, world_it)
         number_of_iters = step
         the_best_x_it = step
