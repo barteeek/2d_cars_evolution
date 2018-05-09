@@ -9,9 +9,9 @@ from evo.world_entities import Terrain
 
 
 class Simulator:
-    def __init__(self, output_dir, vel_iters, pos_iters, route_len, friction, num_workers):
+    def __init__(self, output_dir, terrain, vel_iters, pos_iters, route_len, friction, num_workers):
         self.carBuilder = CarBuilder()
-        self.terrain = Terrain(route_len, friction)
+        self.terrain = terrain
         self.vel_iters = vel_iters
         self.pos_iters = pos_iters
         self.speed = 30
@@ -26,10 +26,15 @@ class Simulator:
             self.worlds += [Box2D.b2World((0, -9.82))]
             self.end_of_route = self.terrain.put_to_world(self.worlds[-1])
 
-    def worker(self, worlds, world_it, car_it, car, scores):
+    def get_end_of_route(self):
+        return self.end_of_route
+
+    def worker(self, worlds, world_it, car_it, car, scores, positions):
         body, wheels, springs = car.put_to_world(worlds[world_it])
         self.wait_until_falls_down(body, world_it)
-        scores[car_it] = self.run(body, springs, world_it)
+        score, position = self.run(body, springs, world_it)
+        scores[car_it] = score
+        positions[car_it] = position
         self.destroy_car(worlds[world_it], body, wheels)
     
     def get_random_individual(self):
@@ -71,17 +76,17 @@ class Simulator:
             current_it += step
             prev_x = body.position.x
 
-        if self.end_of_route[0] <= body.position[0] <= self.end_of_route[1]:
-            return self.end_of_route[0] + 1./number_of_iters
-        return body.position.x
+        return 1.0*min(self.end_of_route[0], body.position[0]) / self.end_of_route[0] + 1./np.log(number_of_iters), \
+                body.position[0]
 
     def get_scores(self, cars):
         scores = np.zeros(len(cars))
+        positions = np.zeros(len(cars))
         i = 0
         while i < len(cars):
             threads = []
             for j in range(np.min((len(cars) - i, self.num_workers))):
-                threads += [threading.Thread(target=self.worker, args=(self.worlds, j, i + j, cars[i + j], scores))]
+                threads += [threading.Thread(target=self.worker, args=(self.worlds, j, i + j, cars[i + j], scores, positions))]
                 threads[-1].start()
             for j in range(np.min((len(cars) - i, self.num_workers))):
                 threads[j].join()
@@ -89,7 +94,7 @@ class Simulator:
             sys.stdout.write("\rscores computed in %d%%" % int((i*100.)/float(len(cars))))
             sys.stdout.flush()
         sys.stdout.write("\n")
-        return scores
+        return scores, positions
 
     def destroy_car(self, world, body, wheels):
         world.DestroyBody(body)

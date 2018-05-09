@@ -11,14 +11,14 @@ if __name__ == "__main__":
                         help='file with car definition')
 
     args = parser.parse_args()
-    simulator = Simulator('/tmp', 8, 3, 200, 30, 1)
     with open(args.car_file, 'rb') as handle:
         dict = pickle.load(handle)
 
     for filename in os.listdir(args.benchmarks_dir):
         with open(args.benchmarks_dir + '/' + filename, 'rb') as handle:
             terrain = pickle.load(handle)
-            score = simulator.get_scores([dict["best"]])
+            simulator = Simulator('/tmp', terrain, 8, 3, 200, 30, 1)
+            score, position = simulator.get_scores([dict["best"]])
 
-            print(filename + "-- score: " + str(score[0]) + \
-                  " route_end: " + terrain.route_end)
+            print(filename + " ------ score: " + str(score[0]) + \
+                  " route_end: " + str(terrain.route_end), " position: ", str(position[0]))
