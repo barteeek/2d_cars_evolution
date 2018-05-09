@@ -156,13 +156,9 @@ class CarRepresentation:
         result.construct_car(copy(self.damping_ratio), copy(self.body_vectors), copy(self.wheels))
         return result
 
-
 class Terrain:
-    def __init__(self, length, friction):
-        self.sticks = np.zeros(length)
-        max_level = 10.
-        for i in range(length):
-            self.sticks[i] = np.random.random() * (float(i)/float(length)) * max_level
+    def __init__(self, heights, friction):
+        self.heights = heights
         self.friction = friction
         self.flat_width = 20
 
@@ -178,7 +174,7 @@ class Terrain:
         )
 
         x, y1, dx = 20, 0, 5
-        vertices = self.sticks
+        vertices = self.heights
         for y2 in vertices * 2:  # iterate through vertices twice
             ground.CreateEdgeFixture(
                 vertices=[(x, y1), (x + dx, y2)],

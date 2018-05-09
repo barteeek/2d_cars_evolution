@@ -2,6 +2,8 @@ import argparse
 import pickle
 from visualization.playground import Playground
 from visualization.framework import main
+from evo.world_entities import Terrain
+import numpy as np
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Evo visualization run')
