@@ -4,6 +4,7 @@ from visualization.playground import Playground
 from visualization.framework import main
 from evo.world_entities import Terrain
 import numpy as np
+import sys
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Evo visualization run')
@@ -15,6 +16,8 @@ if __name__ == "__main__":
 
     with open(args.car_file, 'rb') as handle:
         dict = pickle.load(handle)
+
+    sys.path.append('evo')
 
     with open(args.route_file, 'rb') as handle:
         terrain = pickle.load(handle)
