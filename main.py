@@ -3,8 +3,10 @@ from evo.EvolutionaryAlgorithms import SGA
 import os
 import argparse
 import pickle
+import sys
 
 if __name__ == "__main__":
+    sys.path.append('evo')
     parser = argparse.ArgumentParser(description='Evo run')
     parser.add_argument('output_dir', type=str,
                         help='output directory to save iterations')
@@ -23,6 +25,6 @@ if __name__ == "__main__":
     with open(args.terrain_file, 'rb') as handle:
         terrain = pickle.load(handle)
 
-    alg = SGA(output_dir, population_size=200, number_of_offspring=200, mutation_probability=0.4, number_of_iterations=200)
+    alg = SGA(output_dir, population_size=500, number_of_offspring=500, mutation_probability=0.4, number_of_iterations=200)
     simulator = Simulator(output_dir, terrain, 8, 3, 200, 30, 1)
     alg.make_evolution(simulator)

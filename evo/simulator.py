@@ -36,7 +36,7 @@ class Simulator:
         scores[car_it] = score
         positions[car_it] = position
         self.destroy_car(worlds[world_it], body, wheels)
-    
+
     def get_random_individual(self):
         return self.carBuilder.get_random_car()
 
@@ -65,6 +65,7 @@ class Simulator:
         number_of_iters = step
         the_best_x_it = step
         current_it = step
+        start_x = body.position.x
         the_best_x = body.position.x
         while (not (self.end_of_route[0] <= body.position.x <= self.end_of_route[1])) and \
             current_it - the_best_x_it <= 10 and current_it <= 1000: #and np.abs(body.position.x - prev_x) >= step * 1e-02 :
@@ -76,8 +77,12 @@ class Simulator:
             current_it += step
             prev_x = body.position.x
 
-        return 1.0*min(self.end_of_route[0], body.position[0]) / self.end_of_route[0] + 1./np.log(number_of_iters), \
-                body.position[0]
+        if np.abs(body.position[0] - start_x) < 10.:
+            score = -100.
+        else:
+            score =  1.0*min(self.end_of_route[0], body.position[0]) / self.end_of_route[0] + 1./np.log(number_of_iters)
+
+        return score, body.position[0]
 
     def get_scores(self, cars):
         scores = np.zeros(len(cars))
