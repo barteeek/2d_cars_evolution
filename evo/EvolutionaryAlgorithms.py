@@ -59,6 +59,7 @@ class SGA:
                 file.write("Iteration: " + str(t) + '\n' +
                            " min_score: " + str(np.min(objective_values)) +
                            " max_score: " + str(np.max(objective_values)) +
+                           " std_score: " + str(np.std(objective_values)) +
                            " mean_score: " + str(np.mean(objective_values)) +'\n' +
                            " min_pos: " + str(np.min(positions)) +
                            " max_pos: " + str(np.max(positions)) +
@@ -67,6 +68,7 @@ class SGA:
             print ("Iteration: " + str(t) + '\n' +
                        " min_score: " + str(np.min(objective_values)) +
                        " max_score: " + str(np.max(objective_values)) +
+                       " std_score: " + str(np.std(objective_values)) +
                        " mean_score: " + str(np.mean(objective_values)) + '\n'+
                        " min_pos: " + str(np.min(positions)) +
                        " max_pos: " + str(np.max(positions)) +
@@ -106,7 +108,10 @@ class SGA:
             chromosome = children_population[i].get_chromosome()
             for j in range(chromosome.shape[0]):
                 if np.random.random() < self.mutation_probability:
-                    chromosome[j] = np.random.random()
+                    if j in [13, 15]:
+                        chromosome[j] = np.random.randint(-1, 6)
+                    else:
+                        chromosome[j] += np.random.random() * 2. - 1.
             children_population[i].construct_from_chromosome(chromosome)
 
         # evaluating the objective function on the children population
@@ -129,5 +134,5 @@ class SGA:
         if self.best_objective_value < objective_values[-1]:
             self.best_objective_value = objective_values[-1]
             best_car = population[-1]
-        
+
         return population, objective_values, positions, best_car

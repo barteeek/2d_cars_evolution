@@ -82,11 +82,16 @@ class CarRepresentation:
 
         main_body = world.CreateDynamicBody(position=(x_offset, y_offset))
 
+        # permuted_chromosome = []
+        
+        # for i in [0,  13,  1,2,3,  14,   4,5,6,  15,   7,8,9,   16,   10,11,12]:
+        #     permuted_chromosome += [self.chromosome[i]]
+        permuted_chromosome = self.chromosome
         for i in range(self.body_vec_num):
             triangle = [(0., 0.),
-                (scale_x * self.chromosome[2 * i + 1], scale_y * self.chromosome[2 * i + 2]),
-                (scale_x * self.chromosome[(2 * ((i + 1) % self.body_vec_num)) + 1],
-                 scale_y * self.chromosome[(2 * (((i + 1) % self.body_vec_num))) + 2])]
+                (scale_x * permuted_chromosome[2 * i + 1], scale_y * permuted_chromosome[2 * i + 2]),
+                (scale_x * permuted_chromosome[(2 * ((i + 1) % self.body_vec_num)) + 1],
+                 scale_y * permuted_chromosome[(2 * (((i + 1) % self.body_vec_num))) + 2])]
             main_body.CreatePolygonFixture(shape=b2PolygonShape(vertices=triangle),
                 density=density)
 
@@ -104,14 +109,14 @@ class CarRepresentation:
             #axle_angle = self.chromosome[4 * i + it_offset + 2]
             #radius = radius_scale * self.chromosome[4 * i + it_offset + 3]
 
-            vertex_it = np.clip(int(self.chromosome[2 * i + it_offset]), -1, self.body_vec_num)
+            vertex_it = np.clip(int(permuted_chromosome[2 * i + it_offset]), -1, self.body_vec_num)
             if vertex_it == -1:
                 continue
 
-            radius = radius_scale * self.chromosome[2 * i + it_offset + 1]
+            radius = radius_scale * permuted_chromosome[2 * i + it_offset + 1]
 
-            vertex_x = self.chromosome[2 * vertex_it + 1]
-            vertex_y = self.chromosome[2 * vertex_it + 2]
+            vertex_x = permuted_chromosome[2 * vertex_it + 1]
+            vertex_y = permuted_chromosome[2 * vertex_it + 2]
 
             wheel = world.CreateDynamicBody(
                 position=(x_offset + vertex_x * scale_x, y_offset + vertex_y * scale_y),

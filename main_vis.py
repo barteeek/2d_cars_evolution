@@ -16,6 +16,9 @@ if __name__ == "__main__":
 
     with open(args.car_file, 'rb') as handle:
         dict = pickle.load(handle)
+        
+    # dict["best"].chromosome[16] /= 1.4
+    # dict["best"].chromosome[14] *= 2.
 
     sys.path.append('evo')
 

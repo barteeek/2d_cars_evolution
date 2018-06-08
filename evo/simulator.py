@@ -81,7 +81,6 @@ class Simulator:
             score = -100.
         else:
             score =  1.0*min(self.end_of_route[0], body.position[0]) / self.end_of_route[0] + 1./np.log(number_of_iters)
-
         return score, body.position[0]
 
     def get_scores(self, cars):
