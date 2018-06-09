@@ -80,7 +80,8 @@ class Simulator:
         if np.abs(body.position[0] - start_x) < 10.:
             score = -100.
         else:
-            score =  1.0*min(self.end_of_route[0], body.position[0]) / self.end_of_route[0] + 1./np.log(number_of_iters)
+            max_num_iters = 1000. * self.end_of_route[0] / 5000.
+            score =  1.0*min(self.end_of_route[0], body.position[0]) / self.end_of_route[0] + (max_num_iters - 1.*number_of_iters) / max_num_iters
         return score, body.position[0]
 
     def get_scores(self, cars):

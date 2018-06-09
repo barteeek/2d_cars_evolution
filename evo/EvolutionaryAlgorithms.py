@@ -112,6 +112,7 @@ class SGA:
                         chromosome[j] = np.random.randint(-1, 6)
                     else:
                         chromosome[j] += np.random.random() * 2. - 1.
+                        chromosome[j] = np.clip(chromosome[j], 0.01, np.inf)
             children_population[i].construct_from_chromosome(chromosome)
 
         # evaluating the objective function on the children population
