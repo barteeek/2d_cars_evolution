@@ -53,6 +53,9 @@ class SGA:
         for t in range(self.number_of_iterations):
             population, objective_values, positions, best_individual = \
                 self.make_step(population, objective_values, positions, best_individual)
+            chromosomes = np.zeros((self.population_size, len(population[0].chromosome)))
+            for i in range(self.population_size):
+                chromosomes[i] = population[i].chromosome
             with open(self.dump_dir + "/iteration_" + str(t), 'wb') as handle:
                 pickle.dump({"best":best_individual, "population":population}, handle)
             with open(self.dump_dir + "/logs", "a") as file:
@@ -60,6 +63,7 @@ class SGA:
                            " min_score: " + str(np.min(objective_values)) +
                            " max_score: " + str(np.max(objective_values)) +
                            " std_score: " + str(np.std(objective_values)) +
+                           " std_chromosome: " + str(np.std(chromosomes, axis=0)) +
                            " mean_score: " + str(np.mean(objective_values)) +'\n' +
                            " min_pos: " + str(np.min(positions)) +
                            " max_pos: " + str(np.max(positions)) +
@@ -69,6 +73,7 @@ class SGA:
                        " min_score: " + str(np.min(objective_values)) +
                        " max_score: " + str(np.max(objective_values)) +
                        " std_score: " + str(np.std(objective_values)) +
+                       " std_chromosome: " + str(np.std(chromosomes, axis=0)) +
                        " mean_score: " + str(np.mean(objective_values)) + '\n'+
                        " min_pos: " + str(np.min(positions)) +
                        " max_pos: " + str(np.max(positions)) +
@@ -112,7 +117,7 @@ class SGA:
                         chromosome[j] = np.random.randint(-1, 6)
                     else:
                         chromosome[j] += np.random.random() * 2. - 1.
-                        chromosome[j] = np.clip(chromosome[j], 0.01, np.inf)
+                        chromosome[j] = np.clip(chromosome[j], 0.05, np.inf)
             children_population[i].construct_from_chromosome(chromosome)
 
         # evaluating the objective function on the children population
