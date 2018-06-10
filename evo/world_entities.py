@@ -92,7 +92,7 @@ class CarRepresentation:
         for i in range(self.body_vec_num):
             angles[i] = permuted_chromosome[2 * i + 1]
 
-        angles = np.ones(self.body_vec_num) * 60.
+        # angles = np.ones(self.body_vec_num) * 60.
         angles = 2. * np.pi * (angles / angles.sum())
         # print (angles)
         vectors = np.zeros((self.body_vec_num, 2))
@@ -102,7 +102,6 @@ class CarRepresentation:
             length = permuted_chromosome[2 * i + 2]
             vectors[i, 0] = length * np.cos(currentAngle)
             vectors[i, 1] = length * np.sin(currentAngle)
-        
 
         for i in range(self.body_vec_num):
             triangle = [(0., 0.),
