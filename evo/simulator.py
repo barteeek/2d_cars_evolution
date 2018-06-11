@@ -29,12 +29,18 @@ class Simulator:
     def get_end_of_route(self):
         return self.end_of_route
 
-    def worker(self, worlds, world_it, car_it, car, scores, positions):
-        body, wheels, springs = car.put_to_world(worlds[world_it])
-        self.wait_until_falls_down(body, world_it)
-        score, position = self.run(body, springs, world_it)
+    def worker(self, worlds, world_it, car_it, car, scores, positions, iterations):
+        body, wheels, springs, is_ok = car.put_to_world(worlds[world_it])
+        if is_ok:
+            self.wait_until_falls_down(body, world_it)
+            score, position, iteration = self.run(body, springs, world_it)
+        else:
+            score = -1000.
+            position = 0.
+            iteration = 10000.
         scores[car_it] = score
         positions[car_it] = position
+        iterations[car_it] = iteration
         self.destroy_car(worlds[world_it], body, wheels)
 
     def get_random_individual(self):
@@ -80,18 +86,19 @@ class Simulator:
         if np.abs(body.position[0] - start_x) < 10.:
             score = -100.
         else:
-            max_num_iters = 1000. * self.end_of_route[0] / 5000.
-            score =  1.0*min(self.end_of_route[0], body.position[0]) / self.end_of_route[0] + (max_num_iters - 1.*number_of_iters) / max_num_iters
-        return score, body.position[0]
+            score =  1.0*min(self.end_of_route[0], body.position[0]) / self.end_of_route[0] + \
+                (body.position[0] / (20. * number_of_iters))
+        return score, body.position[0], number_of_iters
 
     def get_scores(self, cars):
         scores = np.zeros(len(cars))
         positions = np.zeros(len(cars))
+        iterations = np.zeros(len(cars))
         i = 0
         while i < len(cars):
             threads = []
             for j in range(np.min((len(cars) - i, self.num_workers))):
-                threads += [threading.Thread(target=self.worker, args=(self.worlds, j, i + j, cars[i + j], scores, positions))]
+                threads += [threading.Thread(target=self.worker, args=(self.worlds, j, i + j, cars[i + j], scores, positions, iterations))]
                 threads[-1].start()
             for j in range(np.min((len(cars) - i, self.num_workers))):
                 threads[j].join()
@@ -99,7 +106,7 @@ class Simulator:
             sys.stdout.write("\rscores computed in %d%%" % int((i*100.)/float(len(cars))))
             sys.stdout.flush()
         sys.stdout.write("\n")
-        return scores, positions
+        return scores, positions, iterations
 
     def destroy_car(self, world, body, wheels):
         world.DestroyBody(body)

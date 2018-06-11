@@ -46,44 +46,55 @@ class SGA:
             population += [simulator.get_random_individual()]
 
         # evaluating the objective function on the current population
-        objective_values, positions = self.simulator.get_scores(population)
+        objective_values, positions, iterations = self.simulator.get_scores(population)
 
         self.costs = np.zeros(self.number_of_iterations)
 
         for t in range(self.number_of_iterations):
-            population, objective_values, positions, best_individual = \
-                self.make_step(population, objective_values, positions, best_individual)
+            population, objective_values, positions, iterations, best_individual = \
+                self.make_step(population, objective_values, positions, iterations, best_individual)
             chromosomes = np.zeros((self.population_size, len(population[0].chromosome)))
             for i in range(self.population_size):
                 chromosomes[i] = population[i].chromosome
             with open(self.dump_dir + "/iteration_" + str(t), 'wb') as handle:
                 pickle.dump({"best":best_individual, "population":population}, handle)
+
+            I = np.argsort(objective_values)
+            min_index = I[0]
+            max_index = I[-1]
+
             with open(self.dump_dir + "/logs", "a") as file:
                 file.write("Iteration: " + str(t) + '\n' +
                            " min_score: " + str(np.min(objective_values)) +
                            " max_score: " + str(np.max(objective_values)) +
                            " std_score: " + str(np.std(objective_values)) +
                            " std_chromosome: " + str(np.std(chromosomes, axis=0)) +
-                           " mean_score: " + str(np.mean(objective_values)) +'\n' +
-                           " min_pos: " + str(np.min(positions)) +
-                           " max_pos: " + str(np.max(positions)) +
-                           " mean_pos: " + str(np.mean(positions)) +
+                           " mean_score: " + str(np.mean(objective_values)) + '\n' +
+                           " min_pos: " + str(positions[min_index]) +
+                           " max_pos: " + str(positions[max_index]) +
+                           " mean_pos: " + str(np.mean(positions)) + "\n" +
+                           " min_iters: " + str(iterations[min_index]) +
+                           " max_iters: " + str(iterations[max_index]) +
+                           " mean_iters: " + str(np.mean(iterations)) + "\n" +
                            " route_end: " + str(simulator.get_end_of_route()) + '\n')
             print ("Iteration: " + str(t) + '\n' +
-                       " min_score: " + str(np.min(objective_values)) +
-                       " max_score: " + str(np.max(objective_values)) +
-                       " std_score: " + str(np.std(objective_values)) +
-                       " std_chromosome: " + str(np.std(chromosomes, axis=0)) +
-                       " mean_score: " + str(np.mean(objective_values)) + '\n'+
-                       " min_pos: " + str(np.min(positions)) +
-                       " max_pos: " + str(np.max(positions)) +
-                       " mean_pos: " + str(np.mean(positions)) +
-                       " route_end: " + str(simulator.get_end_of_route()))
+                           " min_score: " + str(np.min(objective_values)) +
+                           " max_score: " + str(np.max(objective_values)) +
+                           " std_score: " + str(np.std(objective_values)) +
+                           " std_chromosome: " + str(np.std(chromosomes, axis=0)) +
+                           " mean_score: " + str(np.mean(objective_values)) + '\n' +
+                           " min_pos: " + str(positions[min_index]) +
+                           " max_pos: " + str(positions[max_index]) +
+                           " mean_pos: " + str(np.mean(positions)) + "\n" +
+                           " min_iters: " + str(iterations[min_index]) +
+                           " max_iters: " + str(iterations[max_index]) +
+                           " mean_iters: " + str(np.mean(iterations)) + "\n" +
+                           " route_end: " + str(simulator.get_end_of_route()) + '\n')
 
         best_score, _ = self.simulator.get_scores([best_individual])
         return best_individual, best_score
     
-    def make_step(self, population, objective_values, positions, best_car):
+    def make_step(self, population, objective_values, positions, iterations, best_car):
         print ("in make_step ", self.counter)
         self.counter += 1
         # selecting the parent indices by the roulette wheel method
@@ -94,7 +105,6 @@ class SGA:
             fitness_values = np.ones(self.population_size) / self.population_size
         parent_indices = np.random.choice(self.population_size, self.number_of_offspring, True,
                                           fitness_values).astype(np.int64)
-
 
         # creating the children population
         children_population = [None]*self.number_of_offspring
@@ -114,18 +124,19 @@ class SGA:
             for j in range(chromosome.shape[0]):
                 if np.random.random() < self.mutation_probability:
                     if j in [13, 15]:
-                        chromosome[j] = np.random.randint(-1, 6)
+                        chromosome[j] = np.random.randint(0, 6)
                     else:
                         chromosome[j] += np.random.random() * 2. - 1.
                         chromosome[j] = np.clip(chromosome[j], 0.05, np.inf)
             children_population[i].construct_from_chromosome(chromosome)
 
         # evaluating the objective function on the children population
-        children_objective_values, children_positions = self.simulator.get_scores(children_population)
+        children_objective_values, children_positions, children_iterations = self.simulator.get_scores(children_population)
 
         # replacing the current population by (Mu + Lambda) Replacement
         objective_values = np.hstack([objective_values, children_objective_values])
         positions = np.hstack([positions, children_positions])
+        iterations = np.hstack([iterations, children_iterations])
         population = np.hstack([population, children_population])
 
         I = np.argsort(objective_values)
@@ -133,6 +144,7 @@ class SGA:
         z = objective_values[I[-self.population_size:]]
         objective_values = objective_values[I[-self.population_size:]]
         positions = positions[I[-self.population_size:]]
+        iterations = iterations[I[-self.population_size:]]
         
         # self.costs[t] = objective_values[0]
         
@@ -141,4 +153,4 @@ class SGA:
             self.best_objective_value = objective_values[-1]
             best_car = population[-1]
 
-        return population, objective_values, positions, best_car
+        return population, objective_values, positions, iterations, best_car

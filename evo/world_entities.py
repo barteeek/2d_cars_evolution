@@ -74,6 +74,17 @@ class CarRepresentation:
         self.body_vec_num = self.body_vectors.shape[0]
         self.wheel_num = len(self.wheels)
 
+    def is_ok(self, wheels):
+        if len(wheels) <= 1:
+            return True
+
+        wheel_1_pos = np.array([wheels[0].position[0], wheels[0].position[1]])
+        wheel_2_pos = np.array([wheels[1].position[0], wheels[1].position[1]])
+        distance = np.sqrt(np.sum((wheel_1_pos - wheel_2_pos)**2))
+        radius_sum = wheels[0].fixtures[0].shape.radius + wheels[1].fixtures[0].shape.radius
+
+        return distance + 0.01 >= radius_sum
+
     def put_to_world(self, world, offset=(0.0, 10.), scale=(1, 1), hz=4.,
                      zeta=5., density=40., max_torque=40.):
 
@@ -88,18 +99,19 @@ class CarRepresentation:
         #     permuted_chromosome += [self.chromosome[i]]
         permuted_chromosome = self.chromosome
         angles = np.zeros(self.body_vec_num)
-        
+        lengths = np.zeros(self.body_vec_num)
+
         for i in range(self.body_vec_num):
             angles[i] = permuted_chromosome[2 * i + 1]
+            lengths[i] = permuted_chromosome[2 * i + 2]
 
-        # angles = np.ones(self.body_vec_num) * 60.
         angles = 2. * np.pi * (angles / angles.sum())
-        # print (angles)
         vectors = np.zeros((self.body_vec_num, 2))
         currentAngle = 0.
+
         for i in range(self.body_vec_num):
             currentAngle += angles[i]
-            length = permuted_chromosome[2 * i + 2]
+            length = lengths[i] #permuted_chromosome[2 * i + 2]
             vectors[i, 0] = length * np.cos(currentAngle)
             vectors[i, 1] = length * np.sin(currentAngle)
 
@@ -150,13 +162,13 @@ class CarRepresentation:
                 maxMotorTorque=max_torque,
                 enableMotor=enableMotor[i],
                 frequencyHz=hz,
-                dampingRatio=zeta
+                dampingRatio=permuted_chromosome[0]
             )
 
             wheels.append(wheel)
             springs.append(spring)
 
-        return main_body, wheels, springs
+        return main_body, wheels, springs, self.is_ok(wheels)
 
     def get_chromosome(self):
         return self.chromosome
@@ -164,7 +176,7 @@ class CarRepresentation:
     def random(self, body_vec_num):
         self.damping_ratio = np.random.rand(1)
         self.body_vectors = np.random.rand(body_vec_num, 2) * 2
-        self.wheels = [WheelRepresentation(np.random.randint(-1, body_vec_num), random()) for _ in range(2)]
+        self.wheels = [WheelRepresentation(np.random.randint(0, body_vec_num), random()) for _ in range(2)]
         self.body_vec_num = self.body_vectors.shape[0]
         
         self.wheel_num = len(self.wheels)

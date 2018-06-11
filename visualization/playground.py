@@ -18,7 +18,7 @@ class Playground (Framework):
         # create some terrain
         terrain.put_to_world(self.world)
         self.c = car
-        car, wheels, springs = self.c.put_to_world(self.world)
+        car, wheels, springs, _ = self.c.put_to_world(self.world)
 
         self.car = car
         self.wheels = wheels
