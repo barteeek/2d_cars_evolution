@@ -18,7 +18,7 @@ if __name__ == "__main__":
     with open(args.car_file, 'rb') as handle:
         dict = pickle.load(handle)
 
-    row_format = "{:<25}"*4
+    row_format = "{:<25}"*5
 
     filenames = os.listdir(args.benchmarks_dir)
     scores = np.zeros(len(filenames))
@@ -27,12 +27,13 @@ if __name__ == "__main__":
         with open(args.benchmarks_dir + '/' + filename, 'rb') as handle:
             terrain = pickle.load(handle)
             simulator = Simulator('/tmp', terrain, 8, 3, 200, 30, 1)
-            score, position = simulator.get_scores([dict["best"]])
+            score, position, iteration = simulator.get_scores([dict["best"]])
             scores[i] = score
             to_print = [filename,
                         "score: " + str(score[0]),
                         "route_end: " + str(terrain.route_end),
-                        "position: " + str(position[0])]
+                        "position: " + str(position[0]),
+                        "iteration: " + str(iteration[0])]
             print(row_format.format(*to_print))
     print ("SCORES_MEAN = ", np.mean(scores))
     print ("SCORES_STD = ", np.std(scores))

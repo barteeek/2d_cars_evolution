@@ -91,7 +91,7 @@ class SGA:
                            " mean_iters: " + str(np.mean(iterations)) + "\n" +
                            " route_end: " + str(simulator.get_end_of_route()) + '\n')
 
-        best_score, _ = self.simulator.get_scores([best_individual])
+        best_score, _, _ = self.simulator.get_scores([best_individual])
         return best_individual, best_score
     
     def make_step(self, population, objective_values, positions, iterations, best_car):
