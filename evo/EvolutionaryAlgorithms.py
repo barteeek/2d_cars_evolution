@@ -58,7 +58,7 @@ class EvoAlgBase:
                 pickleable_pop += [ind.get_car()]
 
             with open(self.dump_dir + "/iteration_" + str(t), 'wb') as handle:
-                pickle.dump({"best":best_individual, "population":population}, handle)
+                pickle.dump({"best":best_individual, "population":pickleable_pop}, handle)
 
             I = np.argsort(objective_values)
             min_index = I[0]
@@ -187,11 +187,6 @@ class ES(EvoAlgBase):
             self.update_chrom()
 
         def put_to_world(self, *args, **kwargs):
-            print ('------------------')
-            print (self.car.chromosome)
-            print (self.sigmas.shape)
-            print(self.chromosome.shape)
-            print('--------------------')
             return self.car.put_to_world(*args, **kwargs)
 
         def chrom_len(self):

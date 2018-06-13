@@ -25,8 +25,4 @@ if __name__ == "__main__":
     with open(args.route_file, 'rb') as handle:
         terrain = pickle.load(handle)
 
-    dict["best"].chromosome = [-1.00086315,  0.212184,    1.10060529 , 1.43885187 , 0.71241061  ,0.73984752,
- -1.06452472 , 1.44566454 , 1.19407973 , 0.69498135 , 1.39545404  ,1.28407526,
-  0.21789606 , 2.52724146,  0.35820385,  3.55290226 , 0.66961734]
-    print ("BEST " , len(dict["best"].chromosome))
     main(Playground, dict["best"], terrain)

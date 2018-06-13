@@ -54,7 +54,8 @@ class CarRepresentation:
         self.random(6)
 
     def normalize(self):
-        pass
+        if self.chromosome[0] < 0:
+            self.chromosome[0] = 0
 
     def get_car(self):
         return self
@@ -93,7 +94,6 @@ class CarRepresentation:
 
     def put_to_world(self, world, offset=(0.0, 10.), scale=(1, 1), hz=4.,
                      zeta=5., density=40., max_torque=40.):
-
         x_offset, y_offset = offset
         scale_x, scale_y = scale
 
@@ -135,8 +135,6 @@ class CarRepresentation:
         it_offset = 2 * self.body_vec_num + 1
         enableMotor = [False] * self.wheel_num
         enableMotor[0] = True
-        print ("Vs ", vectors)
-        print ("CH ", permuted_chromosome)
 
         for i in range(self.wheel_num):
             #vertex_x = self.chromosome[4 * i + it_offset]
@@ -145,14 +143,11 @@ class CarRepresentation:
             #radius = radius_scale * self.chromosome[4 * i + it_offset + 3]
 
             vertex_it = np.clip(int(permuted_chromosome[2 * i + it_offset]), -1, self.body_vec_num - 1)
-            print ("V IT ", vertex_it)
-
             if vertex_it == -1:
                 continue
 
             radius = radius_scale * permuted_chromosome[2 * i + it_offset + 1]
-            print ("R ", radius)
-            
+
             vertex_x = vectors[vertex_it][0] #permuted_chromosome[2 * vertex_it + 1]
             vertex_y = vectors[vertex_it][1] #permuted_chromosome[2 * vertex_it + 2]
 
@@ -173,7 +168,7 @@ class CarRepresentation:
                 maxMotorTorque=max_torque,
                 enableMotor=enableMotor[i],
                 frequencyHz=hz,
-                dampingRatio=permuted_chromosome[0]
+                dampingRatio=5.#permuted_chromosome[0]
             )
 
             wheels.append(wheel)
