@@ -52,7 +52,19 @@ class CarBuilder:
 class CarRepresentation:
     def __init__(self):
         self.random(6)
-    
+
+    def normalize(self):
+        if self.chromosome[0] < 0.:
+            self.chromosome[0] = 0.
+
+        if self.chromosome[-1] <= 0.:
+            self.chromosome[-1] = 0.5
+        if self.chromosome[-3] <= 0.:
+            self.chromosome[-3] = 0.5
+
+    def get_car(self):
+        return self
+
     def construct_car(self, damping_ratio, body_vectors, wheels):
         # body_vectors N x 2
         self.damping_ratio = damping_ratio
@@ -87,7 +99,6 @@ class CarRepresentation:
 
     def put_to_world(self, world, offset=(0.0, 10.), scale=(1, 1), hz=4.,
                      zeta=5., density=40., max_torque=40.):
-
         x_offset, y_offset = offset
         scale_x, scale_y = scale
 
@@ -136,7 +147,7 @@ class CarRepresentation:
             #axle_angle = self.chromosome[4 * i + it_offset + 2]
             #radius = radius_scale * self.chromosome[4 * i + it_offset + 3]
 
-            vertex_it = np.clip(int(permuted_chromosome[2 * i + it_offset]), -1, self.body_vec_num)
+            vertex_it = np.clip(int(permuted_chromosome[2 * i + it_offset]), -1, self.body_vec_num - 1)
             if vertex_it == -1:
                 continue
 
@@ -162,7 +173,7 @@ class CarRepresentation:
                 maxMotorTorque=max_torque,
                 enableMotor=enableMotor[i],
                 frequencyHz=hz,
-                dampingRatio=permuted_chromosome[0]
+                dampingRatio=5.#permuted_chromosome[0]
             )
 
             wheels.append(wheel)

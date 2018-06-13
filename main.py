@@ -1,5 +1,5 @@
 from evo.simulator import Simulator
-from evo.EvolutionaryAlgorithms import SGA
+from evo.EvolutionaryAlgorithms import SGA, ES
 import os
 import argparse
 import pickle
@@ -25,6 +25,7 @@ if __name__ == "__main__":
     with open(args.terrain_file, 'rb') as handle:
         terrain = pickle.load(handle)
 
-    alg = SGA(output_dir=output_dir, population_size=10, number_of_offspring=10, mutation_probability=0.4, number_of_iterations=200)
+    #alg = SGA(output_dir=output_dir, population_size=10, number_of_offspring=10, mutation_probability=0.4, number_of_iterations=200)
+    alg = ES(sigma=1., tau=1., tau0=1., output_dir=output_dir, population_size=10, number_of_offspring=10, number_of_iterations=200)
     simulator = Simulator(output_dir, terrain, 8, 3, 200, 30, 1)
     alg.make_evolution(simulator)

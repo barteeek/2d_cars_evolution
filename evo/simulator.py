@@ -61,6 +61,8 @@ class Simulator:
             for j in range(60):
                 self.worlds[world_it].Step(1. / 60., self.vel_iters, self.pos_iters)
                 self.worlds[world_it].ClearForces()
+                #print (self.worlds[world_it])
+
 
     def run(self, body, springs, world_it):
         step = 1
@@ -106,6 +108,7 @@ class Simulator:
             sys.stdout.write("\rscores computed in %d%%" % int((i*100.)/float(len(cars))))
             sys.stdout.flush()
         sys.stdout.write("\n")
+
         return scores, positions, iterations
 
     def destroy_car(self, world, body, wheels):
