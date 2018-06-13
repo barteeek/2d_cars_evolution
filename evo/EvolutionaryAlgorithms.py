@@ -21,14 +21,13 @@ def simple_crossover(car1, car2):
 
 class EvoAlgBase:
     def __init__(self, output_dir, init_individual_fun, population_size=500, chromosome_length=21, number_of_offspring=500, \
-        number_of_iterations=50, **kwargs):
+        number_of_iterations=50):
         self.population_size = population_size
         self.chromosome_length = chromosome_length
         self.number_of_offspring = number_of_offspring
         self.number_of_iterations = number_of_iterations
         self.init_individual_fun = init_individual_fun
         self.dump_dir = output_dir
-        self.kwargs = kwargs
 
     def make_evolution(self, simulator):
         self.simulator = simulator
@@ -49,7 +48,7 @@ class EvoAlgBase:
         for t in range(self.number_of_iterations):
             population, objective_values, positions, iterations, best_individual = \
                 self.make_step(population=population, objective_values=objective_values, positions=positions,\
-                               iterations=iterations, best_car=best_individual, **self.kwargs)
+                               iterations=iterations, best_car=best_individual)
             chromosomes = np.zeros((self.population_size, len(population[0].chromosome)))
             for i in range(self.population_size):
                 chromosomes[i] = population[i].chromosome
@@ -97,17 +96,17 @@ class EvoAlgBase:
 
 class SGA(EvoAlgBase):
     def __init__(self, crossover_fun=simple_crossover, crossover_probability=0.95, mutation_probability=0.1, **kwargs):
-        super(SGA, self).__init__(init_individual_fun=self.init_individual,
-                                  crossover_probability=crossover_probability,
-                                  mutation_probability=mutation_probability,
-                                  crossover_fun=crossover_fun, **kwargs)
+        super(SGA, self).__init__(init_individual_fun=self.init_individual, **kwargs)
+        self.crossover_probability=crossover_probability
+        self.mutation_probability = mutation_probability
+        self.crossover_fun = crossover_fun
 
     def init_individual(self, simulator):
         return simulator.get_random_individual()
 
 
     def make_step(self, population, objective_values, positions, iterations, \
-                  best_car, crossover_fun, mutation_probability, crossover_probability, **kwargs):
+                  best_car):
         print ("in make_step ", self.counter)
         self.counter += 1
         # selecting the parent indices by the roulette wheel method
@@ -122,9 +121,9 @@ class SGA(EvoAlgBase):
         # creating the children population
         children_population = [None]*self.number_of_offspring
         for i in range(int(self.number_of_offspring/2)):
-            if np.random.random() < crossover_probability:
+            if np.random.random() < self.crossover_probability:
                 children_population[2*i], children_population[2*i+1] = \
-                   crossover_fun(population[parent_indices[2*i]].make_copy(), \
+                   self.crossover_fun(population[parent_indices[2*i]].make_copy(), \
                        population[parent_indices[2*i+1]].make_copy())
             else:
                 children_population[2*i], children_population[2*i+1] = population[parent_indices[2*i]].make_copy(), population[parent_indices[2*i+1]].make_copy()
@@ -135,7 +134,7 @@ class SGA(EvoAlgBase):
         for i in range(self.number_of_offspring):
             chromosome = children_population[i].get_chromosome()
             for j in range(chromosome.shape[0]):
-                if np.random.random() < mutation_probability:
+                if np.random.random() < self.mutation_probability:
                     if j in [13, 15]:
                         chromosome[j] = np.random.randint(0, 6)
                     else:
