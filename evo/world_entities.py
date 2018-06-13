@@ -54,8 +54,13 @@ class CarRepresentation:
         self.random(6)
 
     def normalize(self):
-        if self.chromosome[0] < 0:
-            self.chromosome[0] = 0
+        if self.chromosome[0] < 0.:
+            self.chromosome[0] = 0.
+
+        if self.chromosome[-1] <= 0.:
+            self.chromosome[-1] = 0.5
+        if self.chromosome[-3] <= 0.:
+            self.chromosome[-3] = 0.5
 
     def get_car(self):
         return self
