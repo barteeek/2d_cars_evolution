@@ -52,7 +52,13 @@ class CarBuilder:
 class CarRepresentation:
     def __init__(self):
         self.random(6)
-    
+
+    def normalize(self):
+        pass
+
+    def get_car(self):
+        return self
+
     def construct_car(self, damping_ratio, body_vectors, wheels):
         # body_vectors N x 2
         self.damping_ratio = damping_ratio
@@ -129,6 +135,8 @@ class CarRepresentation:
         it_offset = 2 * self.body_vec_num + 1
         enableMotor = [False] * self.wheel_num
         enableMotor[0] = True
+        print ("Vs ", vectors)
+        print ("CH ", permuted_chromosome)
 
         for i in range(self.wheel_num):
             #vertex_x = self.chromosome[4 * i + it_offset]
@@ -136,12 +144,15 @@ class CarRepresentation:
             #axle_angle = self.chromosome[4 * i + it_offset + 2]
             #radius = radius_scale * self.chromosome[4 * i + it_offset + 3]
 
-            vertex_it = np.clip(int(permuted_chromosome[2 * i + it_offset]), -1, self.body_vec_num)
+            vertex_it = np.clip(int(permuted_chromosome[2 * i + it_offset]), -1, self.body_vec_num - 1)
+            print ("V IT ", vertex_it)
+
             if vertex_it == -1:
                 continue
 
             radius = radius_scale * permuted_chromosome[2 * i + it_offset + 1]
-
+            print ("R ", radius)
+            
             vertex_x = vectors[vertex_it][0] #permuted_chromosome[2 * vertex_it + 1]
             vertex_y = vectors[vertex_it][1] #permuted_chromosome[2 * vertex_it + 2]
 

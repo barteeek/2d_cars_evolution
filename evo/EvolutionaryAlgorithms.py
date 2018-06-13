@@ -52,6 +52,11 @@ class EvoAlgBase:
             chromosomes = np.zeros((self.population_size, len(population[0].chromosome)))
             for i in range(self.population_size):
                 chromosomes[i] = population[i].chromosome
+
+            pickleable_pop = []
+            for ind in population:
+                pickleable_pop += [ind.get_car()]
+
             with open(self.dump_dir + "/iteration_" + str(t), 'wb') as handle:
                 pickle.dump({"best":best_individual, "population":population}, handle)
 
@@ -166,3 +171,105 @@ class SGA(EvoAlgBase):
             best_car = population[-1]
 
         return population, objective_values, positions, iterations, best_car
+
+class ES(EvoAlgBase):
+    def __init__(self, sigma, tau, tau0, **kwargs):
+        super(ES, self).__init__(init_individual_fun=self.init_individual, **kwargs)
+
+        self.sigma = sigma
+        self.tau = tau
+        self.tau_0 = tau0
+
+    class Individual:
+        def __init__(self, simulator, sigma):
+            self.car = simulator.get_random_individual()
+            self.sigmas = sigma * np.ones(len(self.car.chromosome))
+            self.update_chrom()
+
+        def put_to_world(self, *args, **kwargs):
+            print ('------------------')
+            print (self.car.chromosome)
+            print (self.sigmas.shape)
+            print(self.chromosome.shape)
+            print('--------------------')
+            return self.car.put_to_world(*args, **kwargs)
+
+        def chrom_len(self):
+            return self.sigmas.shape[0]
+
+        def update_chrom(self):
+            self.chromosome = np.concatenate([self.car.chromosome, self.sigmas])
+
+        def update_from_chromosome(self):
+            self.car.chromosome = self.chromosome[:self.sigmas.shape[0]]
+            self.sigmas = self.chromosome[self.sigmas.shape[0]:]
+            self.car.normalize()
+
+        def get_car(self):
+            return self.car
+
+    def init_individual(self, simulator):
+        return self.Individual(simulator, self.sigma)
+
+
+    def make_step(self, population, objective_values, positions, iterations, \
+                  best_car):
+        population_size = len(population)
+        chromosome_length = population[0].chrom_len()
+
+        for t in range(self.number_of_iterations):
+            # selecting the parent indices by the roulette wheel method
+            fitness_values = objective_values - objective_values.min()
+            if fitness_values.sum() > 0:
+                fitness_values = fitness_values / fitness_values.sum()
+            else:
+                fitness_values = 1.0 / population_size * np.ones(
+                    population_size)
+            parent_indices = np.random.choice(population_size, (
+            self.number_of_offspring, 2), True, fitness_values).astype(np.int64)
+
+            # creating the children population by Global Intermediere Recombination
+            children_population = [0] * self.number_of_offspring
+            children_population_solutions = np.zeros(
+                (self.number_of_offspring, chromosome_length))
+            children_population_sigmas = np.zeros(
+                (self.number_of_offspring, chromosome_length))
+            for i in range(self.number_of_offspring):
+                p1 = population[parent_indices[i, 0]]
+                p2 = population[parent_indices[i, 1]]
+                child = self.init_individual(self.simulator)
+                child.chromosome = (p1.chromosome + p2.chromosome) / 2.
+
+                child.chromosome[chromosome_length:] *= np.exp(
+                    self.tau * np.random.randn(chromosome_length) +
+                    self.tau_0 * np.random.randn(1))
+                child.chromosome[:chromosome_length] += \
+                    child.chromosome[chromosome_length:] * np.random.randn(chromosome_length)
+
+                child.update_from_chromosome()
+                children_population[i] = child
+
+
+            # evaluating the objective function on the children population
+            children_objective_values, children_positions, children_iterations = \
+                self.simulator.get_scores(children_population)
+
+            # replacing the current population by (Mu + Lambda) Replacement
+            objective_values = np.hstack(
+                [objective_values, children_objective_values])
+            positions = np.hstack([positions, children_positions])
+            iterations = np.hstack([iterations, children_iterations])
+            population = np.hstack([population, children_population])
+
+            I = np.argsort(objective_values)
+            population = population[I[-self.population_size:]]
+            objective_values = objective_values[I[-self.population_size:]]
+            positions = positions[I[-self.population_size:]]
+            iterations = iterations[I[-self.population_size:]]
+
+            # recording some statistics
+            if self.best_objective_value < objective_values[-1]:
+                self.best_objective_value = objective_values[-1]
+                best_car = population[-1].car
+
+            return population, objective_values, positions, iterations, best_car
