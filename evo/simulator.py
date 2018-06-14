@@ -43,8 +43,8 @@ class Simulator:
         iterations[car_it] = iteration
         self.destroy_car(worlds[world_it], body, wheels)
 
-    def get_random_individual(self):
-        return self.carBuilder.get_random_car()
+    def get_random_individual(self, **kwargs):
+        return self.carBuilder.get_random_car(**kwargs)
 
     def wait_until_falls_down(self, car_body, world_it):
         init_y = car_body.position[1]

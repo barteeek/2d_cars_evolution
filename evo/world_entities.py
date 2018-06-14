@@ -46,12 +46,12 @@ class WheelRepresentation:
     #     self.wheelRadius = np.random.rand()
 
 class CarBuilder:
-    def get_random_car(self):
-        return CarRepresentation()
+    def get_random_car(self, **kwargs):
+        return CarRepresentation(**kwargs)
 
 class CarRepresentation:
-    def __init__(self):
-        self.random(6)
+    def __init__(self, **kwargs):
+        self.random(6, **kwargs)
 
     def normalize(self):
         if self.chromosome[0] < 0.:
@@ -183,8 +183,30 @@ class CarRepresentation:
 
     def get_chromosome(self):
         return self.chromosome
-        
-    def random(self, body_vec_num):
+    
+    def apply_permutation(self, permutation = None):
+        if permutation is None:
+            permutation = self.permutation
+        permuted_chromosome = []
+        for i in permutation:
+            permuted_chromosome += [self.chromosome[i]]
+        return np.array(permuted_chromosome)
+
+    def undo_permutation(self, permutation = None):
+        if permutation is None:
+            permutation = self.permutation
+        original_chromosome = np.zeros(17)
+        for i in permutation:
+            original_chromosome[permutation[i]] += self.chromosome[i]
+        self.chromosome = original_chromosome
+
+    def set_permutation(self, permutation):
+        self.permutation = permutation
+
+    def get_permutation(self):
+        return self.permutation
+
+    def random(self, body_vec_num, **kwargs):
         self.damping_ratio = np.random.rand(1)
         self.body_vectors = np.random.rand(body_vec_num, 2) * 2
         self.wheels = [WheelRepresentation(np.random.randint(0, body_vec_num), random()) for _ in range(2)]
@@ -193,10 +215,16 @@ class CarRepresentation:
         self.wheel_num = len(self.wheels)
         self.chromosome = \
             np.hstack([self.damping_ratio, self.body_vectors.reshape(-1), np.hstack([wheel.get_chromosome() for wheel in self.wheels])])
+
+        if "with_permutations" in kwargs and kwargs["with_permutations"] == True:
+            self.permutation = np.random.permutation(17)
+            print (self.permutation)
              
     def make_copy(self):
         result = type(self)()
         result.construct_car(copy(self.damping_ratio), copy(self.body_vectors), copy(self.wheels))
+        if hasattr(self, 'permutation'):
+            result.permutation = self.permutation
         return result
 
 class Terrain:

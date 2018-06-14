@@ -3,6 +3,52 @@ from .world_entities import CarRepresentation
 import numpy as np
 import pickle
 
+def PMX(ind1, ind2):
+    a = np.random.choice(len(ind1), 2, False)
+    i, j = a.min(), a.max()
+
+    mapping1to2 = {}
+    mapping2to1 = {}
+    
+    for index in range(i, j):
+        x = ind1[index]
+        y = ind2[index]
+        mapping1to2[y] = x
+        mapping2to1[x] = y
+    
+    kid1 = ind1.copy()
+    kid2 = ind2.copy()
+    
+    kid1[i:j] = ind2[i:j]
+    kid2[i:j] = ind1[i:j]
+    
+    for index in range(i):
+        current = kid1[index]
+        while current in mapping1to2:
+            current = mapping1to2[current]
+        kid1[index]  = current
+        
+        current = kid2[index]
+        while current in mapping2to1:
+            current = mapping2to1[current]
+        kid2[index]  = current
+
+    for index in range(j, len(ind1)):
+        current = kid1[index]
+        while current in mapping1to2:
+            current = mapping1to2[current]
+        kid1[index]  = current
+        
+        current = kid2[index]
+        while current in mapping2to1:
+            current = mapping2to1[current]
+        kid2[index]  = current
+
+    # print (kid1, kid2)
+    # assert len(set(kid1)) == len(set(kid2)) == len(ind1)
+    return kid1, kid2
+    # return ind1, ind2
+
 def simple_crossover(car1, car2):
     chromosome1 = car1.get_chromosome()
     chromosome2 = car2.get_chromosome()
@@ -18,6 +64,59 @@ def simple_crossover(car1, car2):
     kid2.construct_from_chromosome(chromosome2)
 
     return kid1, kid2
+
+
+def simple_crossover_with_permutation(car1, car2):
+    chromosome1 = car1.get_chromosome()
+    chromosome2 = car2.get_chromosome()
+    permutation1 = car1.get_permutation()
+    permutation2 = car2.get_permutation()
+    
+    chromosome1 = car1.apply_permutation()
+    chromosome2 = car2.apply_permutation(car1.get_permutation())
+    
+    to_cut = np.random.choice(len(chromosome1), 2, False)
+    to_cut_left, to_cut_right = to_cut.min(), to_cut.max()
+    chromosome1[to_cut_left:to_cut_right], chromosome2[to_cut_left:to_cut_right] = \
+        chromosome2[to_cut_left:to_cut_right], chromosome1[to_cut_left:to_cut_right]
+
+    kid1 = CarRepresentation()
+    kid2 = CarRepresentation()
+
+    kid1.construct_from_chromosome(chromosome1)
+    kid2.construct_from_chromosome(chromosome2)
+    kid1.set_permutation(permutation1)
+    kid2.set_permutation(permutation1)
+
+    kid_1 = [kid1, kid2][np.random.randint(0, 2)]
+    kid_1.undo_permutation()
+
+    chromosome1 = car1.apply_permutation(car2.get_permutation())
+    chromosome2 = car2.apply_permutation()
+    
+    to_cut = np.random.choice(len(chromosome1), 2, False)
+    to_cut_left, to_cut_right = to_cut.min(), to_cut.max()
+    chromosome1[to_cut_left:to_cut_right], chromosome2[to_cut_left:to_cut_right] = \
+        chromosome2[to_cut_left:to_cut_right], chromosome1[to_cut_left:to_cut_right]
+
+    kid1 = CarRepresentation()
+    kid2 = CarRepresentation()
+
+    kid1.construct_from_chromosome(chromosome1)
+    kid2.construct_from_chromosome(chromosome2)
+    kid1.set_permutation(permutation2)
+    kid2.set_permutation(permutation2)
+
+    kid_2 = [kid1, kid2][np.random.randint(0, 2)]
+    kid_2.undo_permutation()
+    
+    new_permutation1, new_permutation2 = PMX(permutation1, permutation2)
+    
+    kid_1.set_permutation(new_permutation1)
+    kid_2.set_permutation(new_permutation2)
+
+    return kid_1, kid_2
+
 
 class EvoAlgBase:
     def __init__(self, output_dir, init_individual_fun, population_size=500, chromosome_length=21, number_of_offspring=500, \
@@ -100,15 +199,15 @@ class EvoAlgBase:
 
 
 class SGA(EvoAlgBase):
-    def __init__(self, crossover_fun=simple_crossover, crossover_probability=0.95, mutation_probability=0.1, **kwargs):
+    def __init__(self, crossover_fun=simple_crossover_with_permutation, crossover_probability=0.95, mutation_probability=0.1, with_permutations = False, **kwargs):
         super(SGA, self).__init__(init_individual_fun=self.init_individual, **kwargs)
         self.crossover_probability=crossover_probability
         self.mutation_probability = mutation_probability
         self.crossover_fun = crossover_fun
+        self.with_permutations = with_permutations
 
     def init_individual(self, simulator):
-        return simulator.get_random_individual()
-
+        return simulator.get_random_individual(with_permutations=self.with_permutations)
 
     def make_step(self, population, objective_values, positions, iterations, \
                   best_car):
@@ -120,20 +219,25 @@ class SGA(EvoAlgBase):
             fitness_values = fitness_values / fitness_values.sum()
         else:
             fitness_values = np.ones(self.population_size) / self.population_size
+        
         parent_indices = np.random.choice(self.population_size, self.number_of_offspring, True,
                                           fitness_values).astype(np.int64)
 
         # creating the children population
-        children_population = [None]*self.number_of_offspring
+        children_population = [None] * self.number_of_offspring
         for i in range(int(self.number_of_offspring/2)):
+            first_parent = population[parent_indices[2*i]].make_copy()
+            second_parent = population[parent_indices[2*i+1]].make_copy()
+            
             if np.random.random() < self.crossover_probability:
-                children_population[2*i], children_population[2*i+1] = \
-                   self.crossover_fun(population[parent_indices[2*i]].make_copy(), \
-                       population[parent_indices[2*i+1]].make_copy())
+                if self.with_permutations == True:
+                    children_population[2*i], children_population[2*i+1] = \
+                        simple_crossover_with_permutation(first_parent, second_parent)
+                else :
+                    children_population[2*i], children_population[2*i+1] = \
+                        simple_crossover(first_parent, second_parent)
             else:
-                children_population[2*i], children_population[2*i+1] = population[parent_indices[2*i]].make_copy(), population[parent_indices[2*i+1]].make_copy()
-        if np.mod(self.number_of_offspring, 2) == 1:
-            children_population[-1] = population[parent_indices[-1]]
+                children_population[2*i], children_population[2*i+1] = first_parent, second_parent
 
         # mutating the children population
         for i in range(self.number_of_offspring):
@@ -146,7 +250,7 @@ class SGA(EvoAlgBase):
                         chromosome[j] += np.random.random() * 2. - 1.
                         chromosome[j] = np.clip(chromosome[j], 0.05, np.inf)
             children_population[i].construct_from_chromosome(chromosome)
-
+        # normalize kids...
         # evaluating the objective function on the children population
         children_objective_values, children_positions, children_iterations = self.simulator.get_scores(children_population)
 
