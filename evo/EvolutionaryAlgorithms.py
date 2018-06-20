@@ -244,8 +244,14 @@ class SGA(EvoAlgBase):
             chromosome = children_population[i].get_chromosome()
             for j in range(chromosome.shape[0]):
                 if np.random.random() < self.mutation_probability:
-                    if j in [13, 15]:
+                    if j in [13, 15]: # joints
                         chromosome[j] = np.random.randint(0, 6)
+                    elif j in [1, 3, 5, 7, 9, 11]:
+                        curr_angle = chromosome[j]
+                        next_angle = chromosome[(j + 2) % 12]
+                        random = np.random.random() * (curr_angle + next_angle)
+                        chromosome[j] = random
+                        chromosome[(j + 2) % 12] = curr_angle + next_angle - random
                     else:
                         chromosome[j] += np.random.random() * 2. - 1.
                         chromosome[j] = np.clip(chromosome[j], 0.05, np.inf)

@@ -54,13 +54,15 @@ class CarRepresentation:
         self.random(6, **kwargs)
 
     def normalize(self):
-        if self.chromosome[0] < 0.:
-            self.chromosome[0] = 0.
+        angles = np.array([self.chromosome[j] for j in [1,3,5,7,9,11]])
 
-        if self.chromosome[-1] <= 0.:
-            self.chromosome[-1] = 0.5
-        if self.chromosome[-3] <= 0.:
-            self.chromosome[-3] = 0.5
+        for j in range(17):
+            if j in [13, 15]: # joints
+                self.chromosome[j] = np.clip(np.floor(self.chromosome[j]), 0, 5)
+            elif j in [1, 3, 5, 7, 9, 11]: # angles
+                self.chromosome[j] = 2 * np.pi * (self.chromosome[j] - angles.min() + 0.05) / (angles - angles.min() + 0.1).sum()
+            else:
+                self.chromosome[j] = np.clip(self.chromosome[j], 0.1, 30.0)
 
     def get_car(self):
         return self
@@ -173,7 +175,7 @@ class CarRepresentation:
                 maxMotorTorque=max_torque,
                 enableMotor=enableMotor[i],
                 frequencyHz=hz,
-                dampingRatio=5.#permuted_chromosome[0]
+                dampingRatio=permuted_chromosome[0]
             )
 
             wheels.append(wheel)
@@ -209,6 +211,10 @@ class CarRepresentation:
     def random(self, body_vec_num, **kwargs):
         self.damping_ratio = np.random.rand(1)
         self.body_vectors = np.random.rand(body_vec_num, 2) * 2
+
+        # normalization for angles
+        self.body_vectors[:, 0] = 2 * np.pi * self.body_vectors[:, 0] / self.body_vectors[:, 0].sum()
+
         self.wheels = [WheelRepresentation(np.random.randint(0, body_vec_num), random()) for _ in range(2)]
         self.body_vec_num = self.body_vectors.shape[0]
         
@@ -219,7 +225,7 @@ class CarRepresentation:
         if "with_permutations" in kwargs and kwargs["with_permutations"] == True:
             self.permutation = np.random.permutation(17)
             print (self.permutation)
-             
+
     def make_copy(self):
         result = type(self)()
         result.construct_car(copy(self.damping_ratio), copy(self.body_vectors), copy(self.wheels))

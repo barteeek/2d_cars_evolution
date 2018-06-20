@@ -26,7 +26,7 @@ if __name__ == "__main__":
     with open(args.terrain_file, 'rb') as handle:
         terrain = pickle.load(handle)
 
-    #alg = SGA(output_dir=output_dir, population_size=10, number_of_offspring=10, mutation_probability=0.4, number_of_iterations=200)
+    #alg = SGA(output_dir=output_dir, population_size=500, number_of_offspring=500, mutation_probability=0.2, number_of_iterations=200)
     alg = ES(sigma=1., tau=1., tau0=1., output_dir=output_dir, population_size=100, number_of_offspring=100, number_of_iterations=200)
 
     #alg = SGA(output_dir=output_dir, population_size=100, number_of_offspring=100, mutation_probability=0.4, number_of_iterations=200, with_permutations = True)
